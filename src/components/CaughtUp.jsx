@@ -4,7 +4,7 @@ import { Ic } from "../icons";
 // ─── CAUGHT UP ────────────────────────────────────────────────────────────────
 // Animated end-of-feed moment. Fades + rises in after a 1.8s delay so it feels
 // like it appears naturally once the user has actually read through the feed.
-export default function CaughtUp({ C, streak, onDigest }) {
+export default function CaughtUp({ C, streak, onDigest, lovedToday=0, readToday=0 }) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 1800);
@@ -45,13 +45,28 @@ export default function CaughtUp({ C, streak, onDigest }) {
           {today}
         </div>
         {streak > 0 && (
-          <div style={{ display:"inline-flex", alignItems:"center", gap:7, background:C.amberPale, border:`1px solid ${C.amberMid}`, borderRadius:20, padding:"5px 14px", fontSize:12, fontWeight:600, color:C.amber, marginBottom:28 }}>
+          <div style={{ display:"inline-flex", alignItems:"center", gap:7, background:C.amberPale, border:`1px solid ${C.amberMid}`, borderRadius:20, padding:"5px 14px", fontSize:12, fontWeight:600, color:C.amber, marginBottom:12 }}>
             <span style={{ fontFamily:"'DM Serif Display',serif", fontSize:14 }}>{streak}</span>
             <span>day streak — keep it up</span>
           </div>
         )}
 
-        <div style={{ background:C.surfaceAlt, border:`1px solid ${C.border}`, borderRadius:14, padding:"22px 24px", marginTop:streak>0?0:28 }}>
+        {(readToday > 0 || lovedToday > 0) && (
+          <div style={{ display:"flex", gap:16, justifyContent:"center", marginBottom:28 }}>
+            {readToday > 0 && (
+              <div style={{ fontSize:12, color:C.inkMid }}>
+                <strong style={{ fontFamily:"'DM Serif Display',serif", fontSize:15, color:C.ink }}>{readToday}</strong> {readToday===1?"story":"stories"} read
+              </div>
+            )}
+            {lovedToday > 0 && (
+              <div style={{ fontSize:12, color:C.inkMid }}>
+                <strong style={{ fontFamily:"'DM Serif Display',serif", fontSize:15, color:C.amber }}>{lovedToday}</strong> loved
+              </div>
+            )}
+          </div>
+        )}
+
+        <div style={{ background:C.surfaceAlt, border:`1px solid ${C.border}`, borderRadius:14, padding:"22px 24px", marginTop:(streak>0||readToday>0||lovedToday>0)?0:28 }}>
           <div style={{ fontFamily:"'DM Serif Display',serif", fontSize:16, color:C.ink, marginBottom:6 }}>
             Wake up to good news tomorrow
           </div>

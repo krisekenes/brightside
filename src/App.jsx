@@ -85,12 +85,63 @@ export default function App() {
   const [showSearch,    setShowSearch]      = useState(false);
   const [searchQuery,   setSearchQuery]     = useState("");
   const [mobileTab,     setMobileTab]       = useState("home");
-  const [streak]                            = useState(7);
   const [showStreak,    setShowStreak]      = useState(false);
+  const [justLovedId,   setJustLovedId]     = useState(null);
+  const [toast,         setToast]           = useState(null);
+  const [readCount,     setReadCount]       = useState(0);
 
-  const toggleLove = useCallback((id,e)=>{e?.stopPropagation();setLovedStories(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n;});},[]);
+  // ── Streak — real persistence via localStorage ──
+  const [streakData, setStreakData] = useState(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const data  = LS.get("bs-streak", { count: 0, lastVisit: null, days: [] });
+    if (data.lastVisit === today) return data;
+    const yesterday = new Date(Date.now() - 864e5).toISOString().split("T")[0];
+    const newCount  = data.lastVisit === yesterday ? data.count + 1 : 1;
+    const days      = [...(data.days||[]).filter(d=>(Date.now()-new Date(d).getTime())/864e5<7), today];
+    const newData   = { count: newCount, lastVisit: today, days };
+    LS.set("bs-streak", newData);
+    return newData;
+  });
+  const streak     = streakData.count;
+  const streakDays = streakData.days || [];
+
+  // Show toast on streak milestones (7, 14, 30…)
+  useEffect(() => {
+    if (![7,14,30,50,100].includes(streak)) return;
+    const shown = LS.get("bs-streak-milestone", 0);
+    if (shown >= streak) return;
+    LS.set("bs-streak-milestone", streak);
+    const t = setTimeout(() => {
+      setToast(`${streak}-day streak`);
+      setTimeout(() => setToast(null), 3000);
+    }, 800);
+    return () => clearTimeout(t);
+  }, [streak]);
+
+  const showToast = useCallback((msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  }, []);
+
+  const toggleLove = useCallback((id,e)=>{
+    e?.stopPropagation();
+    setLovedStories(p=>{
+      const n=new Set(p);
+      if (!n.has(id)) {
+        n.add(id);
+        setJustLovedId(id);
+        setTimeout(()=>setJustLovedId(cur=>cur===id?null:cur), 400);
+        const milestones={5:"5 stories loved",10:"10 loves today",25:"25 loves"};
+        if (milestones[n.size]) showToast(milestones[n.size]);
+      } else {
+        n.delete(id);
+      }
+      return n;
+    });
+  },[showToast]);
   const toggleSave = useCallback((id,e)=>{e?.stopPropagation();setSavedStories(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n;});},[]);
   const unseeStory = useCallback((id)=>{setUnseenStories(p=>new Set([...p,id]));},[]);
+  const openStoryModal = useCallback((story)=>{setOpenStory(story);setReadCount(c=>c+1);},[]);
 
   const [isMobile, setIsMobile] = useState(()=>window.innerWidth<640);
   useEffect(()=>{ const h=()=>setIsMobile(window.innerWidth<640); window.addEventListener("resize",h); return()=>window.removeEventListener("resize",h); },[]);
@@ -166,6 +217,8 @@ export default function App() {
         @keyframes bsPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
         @keyframes bsReadyPop{0%{transform:scale(0.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
         @keyframes bsSunPulse{0%,100%{opacity:0.5;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+        @keyframes bsHeartPop{0%{transform:scale(1)}35%{transform:scale(1.5)}65%{transform:scale(0.88)}100%{transform:scale(1)}}
+        @keyframes bsToastIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
       `}</style>
 
       {/* ── HEADER ─────────────────────────────────────────────── */}
@@ -263,7 +316,7 @@ export default function App() {
           <section>
             <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:C.inkLight,marginBottom:16 }}>Saved · {savedList.length}</div>
             {savedList.length===0?<div style={{ textAlign:"center",padding:"60px 0",color:C.inkLight }}><div style={{ fontFamily:"'DM Serif Display',serif",fontSize:20,color:C.inkMid,marginBottom:8 }}>Nothing saved yet</div><div style={{ fontSize:13 }}>Tap the bookmark on any story to save it here.</div></div>
-              :savedList.map(s=>{const acc=cAcc(s.category,dark);return(<div key={s.id} onClick={()=>setOpenStory(s)} className="bs-card" style={{ display:"flex",alignItems:"center",gap:13,padding:"12px 15px",background:C.surfaceAlt,borderRadius:10,marginBottom:8,cursor:"pointer",border:`1px solid ${C.border}` }}><div style={{ width:4,alignSelf:"stretch",borderRadius:2,background:acc,flexShrink:0 }}/><div style={{ flex:1,minWidth:0 }}><div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",color:acc,marginBottom:2 }}>{s.tag}</div><div style={{ fontFamily:"'DM Serif Display',serif",fontSize:13,color:C.ink,lineHeight:1.35,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{s.title}</div></div><button onClick={e=>{e.stopPropagation();toggleSave(s.id,e);}} style={{ background:"none",border:"none",cursor:"pointer",color:C.amber,fontSize:18,flexShrink:0 }}>×</button></div>);})}
+              :savedList.map(s=>{const acc=cAcc(s.category,dark);return(<div key={s.id} onClick={()=>openStoryModal(s)} className="bs-card" style={{ display:"flex",alignItems:"center",gap:13,padding:"12px 15px",background:C.surfaceAlt,borderRadius:10,marginBottom:8,cursor:"pointer",border:`1px solid ${C.border}` }}><div style={{ width:4,alignSelf:"stretch",borderRadius:2,background:acc,flexShrink:0 }}/><div style={{ flex:1,minWidth:0 }}><div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",color:acc,marginBottom:2 }}>{s.tag}</div><div style={{ fontFamily:"'DM Serif Display',serif",fontSize:13,color:C.ink,lineHeight:1.35,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{s.title}</div></div><button onClick={e=>{e.stopPropagation();toggleSave(s.id,e);}} style={{ background:"none",border:"none",cursor:"pointer",color:C.amber,fontSize:18,flexShrink:0 }}>×</button></div>);})}
           </section>
         )}
 
@@ -304,7 +357,7 @@ export default function App() {
                   <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:activeMood?C.amber:C.inkLight,marginBottom:12 }}>
                     {activeMood?`${activeMood} — Sorted for your mood`:"Top Story"}
                   </div>
-                  <div onClick={()=>setOpenStory(featured)} className="bs-card bs-card-in" style={{ background:featBg,borderRadius:14,overflow:"hidden",border:`1px solid ${C.border}`,cursor:"pointer",display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 280px",minHeight:isMobile?"auto":280 }}>
+                  <div onClick={()=>openStoryModal(featured)} className="bs-card bs-card-in" style={{ background:featBg,borderRadius:14,overflow:"hidden",border:`1px solid ${C.border}`,cursor:"pointer",display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 280px",minHeight:isMobile?"auto":280 }}>
                     <div style={{ padding:isMobile?"18px 18px 14px":"30px 34px",display:"flex",flexDirection:"column",justifyContent:"space-between" }}>
                       <div>
                         <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:featAcc,marginBottom:11 }}>{featured.tag}</div>
@@ -319,7 +372,7 @@ export default function App() {
                             <span style={{ fontSize:12,fontWeight:600,color:lovedStories.has(featured.id)?C.amber:C.inkMid }}>{(featured.loves+(lovedStories.has(featured.id)?1:0)).toLocaleString()}</span>
                           </button>
                           <button onClick={e=>{e.stopPropagation();setShareStory(featured);}} className="bs-btn">Share</button>
-                          <button onClick={()=>setOpenStory(featured)} className="bs-btn bs-btn-dark">Read</button>
+                          <button onClick={()=>openStoryModal(featured)} className="bs-btn bs-btn-dark">Read</button>
                         </div>
                       </div>
                     </div>
@@ -336,8 +389,8 @@ export default function App() {
                 </section>
               )}
 
-              {activeCategory==="all"&&<StoryRail title="Most Loved Today" subtitle={`${mostLoved.reduce((s,x)=>s+x.loves,0).toLocaleString()} loves`} stories={mostLoved} lovedSet={lovedStories} onLove={id=>toggleLove(id)} onOpen={setOpenStory} C={C} dark={dark}/>}
-              {activeCategory==="all"&&nearYou.length>0&&<StoryRail title="Spreading Joy Near You" subtitle="Stories with a local heartbeat" stories={nearYou} lovedSet={lovedStories} onLove={id=>toggleLove(id)} onOpen={setOpenStory} C={C} dark={dark}/>}
+              {activeCategory==="all"&&<StoryRail title="Most Loved Today" subtitle={`${mostLoved.reduce((s,x)=>s+x.loves,0).toLocaleString()} loves`} stories={mostLoved} lovedSet={lovedStories} onLove={id=>toggleLove(id)} onOpen={openStoryModal} C={C} dark={dark} justLovedId={justLovedId}/>}
+              {activeCategory==="all"&&nearYou.length>0&&<StoryRail title="Spreading Joy Near You" subtitle="Stories with a local heartbeat" stories={nearYou} lovedSet={lovedStories} onLove={id=>toggleLove(id)} onOpen={openStoryModal} C={C} dark={dark} justLovedId={justLovedId}/>}
 
               {grid.length>0&&(
                 <section>
@@ -350,14 +403,14 @@ export default function App() {
                         onLove={e=>toggleLove(story.id,e)} onSave={e=>toggleSave(story.id,e)}
                         onShare={e=>{e?.stopPropagation();setShareStory(story);}}
                         onUnsee={e=>{e?.stopPropagation();unseeStory(story.id);}}
-                        onClick={()=>setOpenStory(story)} C={C} dark={dark} delay={i*0.04}/>
+                        onClick={()=>openStoryModal(story)} C={C} dark={dark} delay={i*0.04} justLovedId={justLovedId}/>
                     ))}
                   </div>
                 </section>
               )}
 
               {/* ── You're caught up ── */}
-              <CaughtUp C={C} streak={streak} onDigest={()=>setShowDigest(true)}/>
+              <CaughtUp C={C} streak={streak} onDigest={()=>setShowDigest(true)} lovedToday={lovedStories.size} readToday={readCount}/>
 
               {!isMobile&&savedList.length>0&&(
                 <section style={{ marginTop:48,paddingTop:32,borderTop:`1px solid ${C.border}` }}>
@@ -365,7 +418,7 @@ export default function App() {
                     <h2 style={{ fontFamily:"'DM Serif Display',serif",fontSize:18,fontWeight:400,color:C.ink }}>Saved</h2>
                     <span style={{ fontSize:13,color:C.inkLight }}>{savedList.length}</span>
                   </div>
-                  {savedList.map(s=>{const acc=cAcc(s.category,dark);return(<div key={s.id} onClick={()=>setOpenStory(s)} className="bs-card" style={{ display:"flex",alignItems:"center",gap:13,padding:"12px 16px",background:C.surfaceAlt,borderRadius:9,marginBottom:7,cursor:"pointer",border:`1px solid ${C.border}` }}><div style={{ width:4,alignSelf:"stretch",borderRadius:2,background:acc,flexShrink:0 }}/><div style={{ flex:1 }}><div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",color:acc,marginBottom:2 }}>{s.tag}</div><div style={{ fontFamily:"'DM Serif Display',serif",fontSize:13,color:C.ink,lineHeight:1.35 }}>{s.title}</div></div><div style={{ fontSize:11,color:C.inkLight,flexShrink:0 }}>{s.source}</div><button onClick={e=>{e.stopPropagation();toggleSave(s.id,e);}} style={{ background:"none",border:"none",cursor:"pointer",color:C.amber,fontSize:18,lineHeight:1 }}>×</button></div>);})}
+                  {savedList.map(s=>{const acc=cAcc(s.category,dark);return(<div key={s.id} onClick={()=>openStoryModal(s)} className="bs-card" style={{ display:"flex",alignItems:"center",gap:13,padding:"12px 16px",background:C.surfaceAlt,borderRadius:9,marginBottom:7,cursor:"pointer",border:`1px solid ${C.border}` }}><div style={{ width:4,alignSelf:"stretch",borderRadius:2,background:acc,flexShrink:0 }}/><div style={{ flex:1 }}><div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",color:acc,marginBottom:2 }}>{s.tag}</div><div style={{ fontFamily:"'DM Serif Display',serif",fontSize:13,color:C.ink,lineHeight:1.35 }}>{s.title}</div></div><div style={{ fontSize:11,color:C.inkLight,flexShrink:0 }}>{s.source}</div><button onClick={e=>{e.stopPropagation();toggleSave(s.id,e);}} style={{ background:"none",border:"none",cursor:"pointer",color:C.amber,fontSize:18,lineHeight:1 }}>×</button></div>);})}
                 </section>
               )}
             </>}
@@ -384,14 +437,26 @@ export default function App() {
             <div style={{ position:"fixed",bottom:80,right:24,background:C.surface,border:`1.5px solid ${C.border}`,borderRadius:12,padding:18,boxShadow:`0 8px 32px ${C.shadowMd}`,zIndex:200,width:216 }}>
               <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:15,color:C.ink,marginBottom:13 }}>This week</div>
               <div style={{ display:"flex",justifyContent:"space-between",marginBottom:11 }}>
-                {["Su","Mo","Tu","We","Th","Fr","Sa"].map((d,i)=>(
-                  <div key={i} style={{ textAlign:"center" }}>
-                    <div style={{ fontSize:9,color:C.inkLight,marginBottom:5,fontWeight:500 }}>{d}</div>
-                    <div style={{ width:23,height:23,borderRadius:"50%",background:i<streak?C.amber:C.border,display:"flex",alignItems:"center",justifyContent:"center" }}>{i<streak&&<Ic.Check c="#fff" s={9}/>}</div>
-                  </div>
-                ))}
+                {(()=>{
+                  const today=new Date(), dow=today.getDay();
+                  const sunday=new Date(today); sunday.setDate(today.getDate()-dow);
+                  return ["Su","Mo","Tu","We","Th","Fr","Sa"].map((d,i)=>{
+                    const day=new Date(sunday); day.setDate(sunday.getDate()+i);
+                    const iso=day.toISOString().split("T")[0];
+                    const visited=streakDays.includes(iso);
+                    const isToday=i===dow;
+                    return(
+                      <div key={i} style={{ textAlign:"center" }}>
+                        <div style={{ fontSize:9,color:isToday?C.amber:C.inkLight,marginBottom:5,fontWeight:isToday?700:500 }}>{d}</div>
+                        <div style={{ width:23,height:23,borderRadius:"50%",background:visited?C.amber:C.border,border:isToday&&!visited?`2px solid ${C.amber}`:"none",display:"flex",alignItems:"center",justifyContent:"center",boxSizing:"border-box" }}>
+                          {visited&&<Ic.Check c="#fff" s={9}/>}
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
-              <div style={{ fontSize:11,color:C.inkLight,textAlign:"center",lineHeight:1.5 }}>A week of bright news. Keep it going.</div>
+              <div style={{ fontSize:11,color:C.inkLight,textAlign:"center",lineHeight:1.5 }}>{streak>1?`${streak} days and counting. Keep it going.`:"Day 1 — come back tomorrow to build your streak."}</div>
             </div>
           )}
         </>
@@ -417,6 +482,14 @@ export default function App() {
       {showSettings&&<SettingsPanel C={C} dark={dark} prefs={prefs} onUpdate={updatePrefs} onClose={()=>setShowSettings(false)} onResetOnboarding={resetOnboarding} onHowWeFilter={()=>{setShowSettings(false);setShowHowWeFilter(true);}}/>}
       {showAccount&&<AccountModal onClose={()=>setShowAccount(false)} C={C} dark={dark} prefs={prefs} streak={streak} lovedCount={lovedStories.size} savedCount={savedStories.size} onResetOnboarding={resetOnboarding}/>}
       {showHowWeFilter&&<HowWeFilterModal onClose={()=>setShowHowWeFilter(false)} C={C}/>}
+
+      {/* ── TOAST ──────────────────────────────────────────────── */}
+      {toast&&(
+        <div style={{ position:"fixed",bottom:isMobile?88:32,left:"50%",transform:"translateX(-50%)",background:C.ink,color:dark?C.bg:"#fff",borderRadius:20,padding:"9px 18px",fontSize:12,fontWeight:600,fontFamily:"'DM Sans',sans-serif",zIndex:500,whiteSpace:"nowrap",boxShadow:`0 4px 20px ${C.shadowMd}`,animation:"bsToastIn 0.25s ease",display:"flex",alignItems:"center",gap:8,pointerEvents:"none" }}>
+          <Ic.Heart c={C.amber} f s={12}/>
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

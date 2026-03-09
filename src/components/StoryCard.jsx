@@ -2,7 +2,7 @@ import { cAcc, cBg } from "../lib/theme";
 import { Ic } from "../icons";
 
 // ─── STORY CARD ───────────────────────────────────────────────────────────────
-export default function StoryCard({ story, loved, saved, onLove, onSave, onShare, onUnsee, onClick, C, dark, delay=0 }) {
+export default function StoryCard({ story, loved, saved, onLove, onSave, onShare, onUnsee, onClick, C, dark, delay=0, justLovedId }) {
   const acc=cAcc(story.category,dark), bg=cBg(story.category,dark);
   return (
     <article onClick={onClick} className="bs-card" style={{ background:bg,borderRadius:12,overflow:"hidden",border:`1px solid ${C.border}`,cursor:"pointer",animationDelay:`${delay}s`,display:"flex",flexDirection:"column" }}>
@@ -19,7 +19,8 @@ export default function StoryCard({ story, loved, saved, onLove, onSave, onShare
         </div>
         <div style={{ display:"flex",gap:5,alignItems:"center" }} onClick={e=>e.stopPropagation()}>
           <button onClick={onLove} style={{ display:"flex",alignItems:"center",gap:5,padding:"5px 9px",borderRadius:20,background:loved?C.amberPale:C.surface,border:`1px solid ${loved?C.amber:C.border}`,cursor:"pointer",transition:"all 0.15s" }}>
-            <Ic.Heart c={loved?C.amber:C.inkLight} f={loved}/><span style={{ fontSize:11,fontWeight:600,color:loved?C.amber:C.inkLight }}>{(story.loves+(loved?1:0)).toLocaleString()}</span>
+            <span style={{ display:"inline-flex",animation:justLovedId===story.id?"bsHeartPop 0.35s ease":undefined }}><Ic.Heart c={loved?C.amber:C.inkLight} f={loved}/></span>
+            <span style={{ fontSize:11,fontWeight:600,color:loved?C.amber:C.inkLight }}>{(story.loves+(loved?1:0)).toLocaleString()}</span>
           </button>
           <button onClick={onSave}  style={{ width:30,height:30,borderRadius:6,background:saved?C.amberPale:C.surface,border:`1px solid ${saved?C.amber:C.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.15s" }}><Ic.Bookmark c={saved?C.amber:C.inkLight} f={saved}/></button>
           <button onClick={onShare} style={{ width:30,height:30,borderRadius:6,background:C.surface,border:`1px solid ${C.border}`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}><Ic.Share c={C.inkLight}/></button>

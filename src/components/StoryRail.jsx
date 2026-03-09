@@ -1,7 +1,7 @@
 import { cAcc, cBg } from "../lib/theme";
 import { Ic } from "../icons";
 
-export default function StoryRail({ title, subtitle, stories, lovedSet, onLove, onOpen, C, dark }) {
+export default function StoryRail({ title, subtitle, stories, lovedSet, onLove, onOpen, C, dark, justLovedId }) {
   return (
     <section style={{ marginBottom:40 }}>
       <div style={{ display:"flex",alignItems:"baseline",gap:10,marginBottom:14 }}>
@@ -20,7 +20,7 @@ export default function StoryRail({ title, subtitle, stories, lovedSet, onLove, 
                 <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between" }}>
                   <span style={{ fontSize:11,color:C.inkLight }}>{s.source}</span>
                   <button onClick={e=>{e.stopPropagation();onLove(s.id);}} style={{ display:"flex",alignItems:"center",gap:4,background:lovedSet.has(s.id)?C.amberPale:C.surface,border:`1px solid ${lovedSet.has(s.id)?C.amber:C.border}`,borderRadius:20,padding:"3px 8px",cursor:"pointer",transition:"all 0.15s" }}>
-                    <Ic.Heart c={lovedSet.has(s.id)?C.amber:C.inkLight} f={lovedSet.has(s.id)} s={11}/>
+                    <span style={{ display:"inline-flex",animation:justLovedId===s.id?"bsHeartPop 0.35s ease":undefined }}><Ic.Heart c={lovedSet.has(s.id)?C.amber:C.inkLight} f={lovedSet.has(s.id)} s={11}/></span>
                     <span style={{ fontSize:11,fontWeight:600,color:lovedSet.has(s.id)?C.amber:C.inkLight }}>{(s.loves+(lovedSet.has(s.id)?1:0)).toLocaleString()}</span>
                   </button>
                 </div>
