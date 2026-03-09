@@ -17,7 +17,7 @@ A positive-news web app that filters out negative and distressing content, servi
 - **Dark mode** — warm burnt umber palette, not cold grays; respects system preference
 - **Fully responsive** — mobile bottom nav, desktop rail layout
 - **Onboarding flow** — 2-step category + mood picker with animated completion screen
-- **Account modal** — stats, preferences summary, BrightSide+ upgrade CTA
+- **Account modal** — stats and preferences summary
 - **"How we filter"** — transparency page explaining the sentiment scoring system
 
 ## Design
@@ -76,5 +76,4 @@ npm run preview
 ## What's Not Built Yet
 
 1. **Real content pipeline** — RSS ingestion, Google NLP sentiment scoring (≥0.65 auto-approve), Go API + Supabase
-2. **BrightSide+** — $4.99/mo paywall (unlimited saves, ad-free, streak freeze, custom digest time)
 3. **Account/auth** — Supabase Auth, persistent user profile

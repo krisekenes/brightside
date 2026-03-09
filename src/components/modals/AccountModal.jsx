@@ -46,16 +46,6 @@ export default function AccountModal({ onClose, C, dark, prefs, streak, lovedCou
         )}
       </div>
 
-      {/* BrightSide+ CTA */}
-      <div style={{ padding:"16px 26px",borderBottom:`1px solid ${C.border}`,background:C.amberPale }}>
-        <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",gap:12 }}>
-          <div>
-            <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:15,color:C.ink,marginBottom:3 }}>BrightSide+</div>
-            <div style={{ fontSize:12,color:C.inkMid,lineHeight:1.5 }}>Unlimited saves, ad-free, streak freeze</div>
-          </div>
-          <button style={{ background:C.amber,color:"#fff",border:"none",borderRadius:8,padding:"8px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",flexShrink:0 }}>$4.99 / mo</button>
-        </div>
-      </div>
 
       {/* Reset */}
       <div style={{ padding:"16px 26px 22px" }}>
