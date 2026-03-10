@@ -1,6 +1,4 @@
 // api/feed.js — Vercel serverless function
-// Fetches articles from The Guardian API, maps them to the BrightSide Story
-// shape, and applies a keyword-based positive filter before returning JSON.
 
 // ─── Category → Guardian API query map ────────────────────────────────────────
 
@@ -43,18 +41,46 @@ const CATEGORY_QUERY_MAP = {
   },
 };
 
+// ─── Guardian section → BrightSide category ───────────────────────────────────
+// Used when category param is "all" so stories still get a real category id.
+
+const SECTION_TO_CATEGORY = {
+  "environment":  "nature",
+  "science":      "discover",
+  "technology":   "discover",
+  "society":      "community",
+  "uk-news":      "community",
+  "lifeandstyle": "wellness",
+  "world":        "world",
+  "global":       "world",
+  "politics":     "politics",
+  "us-news":      "politics",
+  "culture":      "ideas",
+  "books":        "ideas",
+  "film":         "ideas",
+  "music":        "ideas",
+  "sport":        "discover",
+  "business":     "world",
+  "money":        "wellness",
+};
+
+function resolveCategory(requestedCategory, sectionId) {
+  if (requestedCategory !== "all") return requestedCategory;
+  return SECTION_TO_CATEGORY[sectionId] || "discover";
+}
+
 // ─── Positive keyword filter ───────────────────────────────────────────────────
 
 const BLOCKLIST = [
-  "killed", "killing", "murder", "murdered", "dead", "death", "deaths", "died",
+  "killed", "killing", "kill", "murder", "murdered", "dead", "death", "deaths", "died",
   "attack", "attacked", "shooting", "shooter", "gun violence", "stabbing",
-  "bomb", "bombing", "explosion", "terror", "terrorist",
+  "bomb", "bombing", "explosion", "terror", "terrorist", "missile", "nuclear",
   "crash", "crashed", "disaster", "catastrophe", "casualties",
-  "war", "warfare", "conflict", "invasion", "siege",
+  "war", "warfare", "conflict", "invasion", "siege", "military strike", "airstrike",
   "abuse", "abused", "assault", "rape", "trafficking",
   "crisis", "emergency", "collapse", "bankrupt", "recession",
   "scandal", "corruption", "fraud", "arrested", "charged", "convicted",
-  "suicide", "overdose",
+  "suicide", "overdose", "hostage", "kidnap",
 ];
 
 const SIGNAL_WORDS = [
@@ -64,8 +90,16 @@ const SIGNAL_WORDS = [
   "expanded", "improved", "growing", "thriving", "healed", "reunited",
 ];
 
+function stripHtml(str) {
+  return str.replace(/<[^>]+>/g, " ");
+}
+
 function positiveFilter(story) {
-  const text = `${story.title} ${story.summary}`.toLowerCase();
+  const text = stripHtml(`${story.title} ${story.summary}`).toLowerCase();
+
+  // Reject if there's no real summary content (liveblogs, etc.)
+  const stripped = stripHtml(story.summary).trim();
+  if (stripped.length < 30) return false;
 
   let blockHits = 0;
   for (const word of BLOCKLIST) {
@@ -92,37 +126,36 @@ const TAG_POOLS = {
   politics:  ["Policy", "Reform", "Legislation", "Progress", "Democracy"],
   local:     ["Local", "Nearby", "Regional", "City", "Town"],
   ideas:     ["Ideas", "Design", "Arts", "Creativity", "Startup"],
-  all:       ["Good News", "Positive", "Uplifting"],
 };
 
 const TAG_SIGNALS = {
-  Wildlife:      /wildlife|animal|bird|mammal|reef/i,
-  Conservation:  /conserv|protect|preserv/i,
-  Rewilding:     /rewild|reintroduc|habitat restor/i,
-  Discovery:     /discover|found|identified/i,
-  Breakthrough:  /breakthrough|milestone|first ever/i,
-  Space:         /space|nasa|orbit|planet|star|galaxy/i,
-  Innovation:    /innovat|tech|engineer|invent/i,
-  Kindness:      /kind|compassion|helped|support/i,
-  Volunteer:     /volunteer|donate|charity/i,
-  "Local Hero":  /hero|champion|communit/i,
-  Fundraising:   /fundrais|raised|donated/i,
-  Wellness:      /wellbeing|wellness|thrive/i,
+  Wildlife:       /wildlife|animal|bird|mammal|reef/i,
+  Conservation:   /conserv|protect|preserv/i,
+  Rewilding:      /rewild|reintroduc|habitat restor/i,
+  Discovery:      /discover|found|identified/i,
+  Breakthrough:   /breakthrough|milestone|first ever/i,
+  Space:          /space|nasa|orbit|planet|star|galaxy/i,
+  Innovation:     /innovat|tech|engineer|invent/i,
+  Kindness:       /kind|compassion|helped|support/i,
+  Volunteer:      /volunteer|donate|charity/i,
+  "Local Hero":   /hero|champion|communit/i,
+  Fundraising:    /fundrais|raised|donated/i,
+  Wellness:       /wellbeing|wellness|thrive/i,
   "Mental Health":/mental health|anxiety|depression|therapy/i,
-  Fitness:       /fitness|exercise|sport|marathon/i,
-  Recovery:      /recover|heal|rehabilit/i,
-  Aid:           /aid|relief|humanitarian/i,
-  Diplomacy:     /diplomat|negotiat|agreement|treaty/i,
-  Peace:         /peace|ceasefire|reconcil/i,
-  Reform:        /reform|overhaul|revamp/i,
-  Legislation:   /law|legislat|bill|act\b/i,
-  Design:        /design|architect|aesthetic/i,
-  Arts:          /art|museum|gallery|theatre|concert/i,
-  Startup:       /startup|founder|launch/i,
+  Fitness:        /fitness|exercise|sport|marathon/i,
+  Recovery:       /recover|heal|rehabilit/i,
+  Aid:            /aid|relief|humanitarian/i,
+  Diplomacy:      /diplomat|negotiat|agreement|treaty/i,
+  Peace:          /peace|ceasefire|reconcil/i,
+  Reform:         /reform|overhaul|revamp/i,
+  Legislation:    /law|legislat|bill|act\b/i,
+  Design:         /design|architect|aesthetic/i,
+  Arts:           /art|museum|gallery|theatre|concert/i,
+  Startup:        /startup|founder|launch/i,
 };
 
 function deriveTag(category, title) {
-  const pool = TAG_POOLS[category] || TAG_POOLS.all;
+  const pool = TAG_POOLS[category] || TAG_POOLS.discover;
   for (const tag of pool) {
     const re = TAG_SIGNALS[tag];
     if (re && re.test(title)) return tag;
@@ -170,9 +203,10 @@ function estimateReadTime(wordcount) {
 
 // ─── Story mapper ──────────────────────────────────────────────────────────────
 
-function mapToStory(article, category) {
-  const title   = article.webTitle || "";
-  const summary = article.fields?.trailText || "";
+function mapToStory(article, requestedCategory) {
+  const title    = article.webTitle || "";
+  const summary  = stripHtml(article.fields?.trailText || "");
+  const category = resolveCategory(requestedCategory, article.sectionId || "");
   return {
     id:       article.id,
     category,
@@ -208,6 +242,7 @@ export default async function handler(req, res) {
     (query.section ? `&section=${encodeURIComponent(query.section)}` : "") +
     `&page-size=30&order-by=newest&page=${page}` +
     `&show-fields=trailText,wordcount,byline,bodyText` +
+    `&tag=type/article` +
     `&api-key=${key}`;
 
   let data;
