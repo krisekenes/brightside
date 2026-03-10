@@ -191,7 +191,7 @@ export default function App() {
         ::selection{background:${C.amberPale};color:${C.amber}}
         ::-webkit-scrollbar{width:0;height:0}
         .bs-card{transition:transform 0.18s ease,box-shadow 0.18s ease}
-        .bs-card:hover{transform:translateY(-2px);box-shadow:0 8px 28px ${C.shadowMd}}
+        @media(hover:hover){.bs-card:hover{transform:translateY(-2px);box-shadow:0 8px 28px ${C.shadowMd}}}
         .bs-rail{display:flex;gap:14px;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
         .bs-rail-card{width:255px;scroll-snap-align:start}
         @media(max-width:639px){.bs-rail-card{width:215px}}
@@ -230,22 +230,23 @@ export default function App() {
               {!isMobile&&<div style={{ fontSize:10,fontWeight:500,letterSpacing:"0.07em",color:C.inkLight,marginTop:1 }}>Today's Good News</div>}
             </div>
 
-            <div style={{ display:"flex",alignItems:"center",gap:7 }}>
-              {/* Personalisation indicator */}
+            <div style={{ display:"flex",alignItems:"center",gap:isMobile?5:7 }}>
               {!isMobile && prefs.categories.length < CATS.length && (
                 <div style={{ fontSize:11,fontWeight:600,color:C.amber,background:C.amberPale,border:`1px solid ${C.amberMid}`,borderRadius:20,padding:"4px 10px" }}>
                   {prefs.categories.length} sections
                 </div>
               )}
-              <div style={{ display:"flex",alignItems:"center",gap:6,padding:"5px 10px",background:C.amberPale,border:`1px solid ${C.amberMid}`,borderRadius:20,fontSize:11,fontWeight:600,color:C.amber }}>
-                <span style={{ width:6,height:6,borderRadius:"50%",background:C.amber,display:"inline-block",animation:"bsPulse 2.2s infinite" }}/>
-                {isMobile?"Live":"Live feed"}
-              </div>
+              {!isMobile&&(
+                <div style={{ display:"flex",alignItems:"center",gap:6,padding:"5px 10px",background:C.amberPale,border:`1px solid ${C.amberMid}`,borderRadius:20,fontSize:11,fontWeight:600,color:C.amber }}>
+                  <span style={{ width:6,height:6,borderRadius:"50%",background:C.amber,display:"inline-block",animation:"bsPulse 2.2s infinite" }}/>
+                  Live feed
+                </div>
+              )}
               {!isMobile&&<button className="bs-btn" onClick={()=>setShowDigest(true)}>Daily Digest</button>}
-              <button className="bs-btn" onClick={()=>setShowSearch(v=>!v)} style={{ width:36,height:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center",background:showSearch?C.amberPale:C.surfaceAlt,borderColor:showSearch?C.amberMid:C.border }}><Ic.Search c={showSearch?C.amber:C.inkMid}/></button>
-              <button className="bs-btn" onClick={()=>setShowAccount(true)} style={{ width:36,height:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }} title="Your account"><Ic.Person c={C.inkMid}/></button>
-              <button className="bs-btn" onClick={()=>setShowSettings(true)} style={{ width:36,height:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }} title="Preferences"><Ic.Settings c={C.inkMid}/></button>
-              <button className="bs-btn" onClick={()=>setDark(v=>!v)} style={{ width:36,height:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }}>
+              <button className="bs-btn" onClick={()=>setShowSearch(v=>!v)} style={{ width:isMobile?40:36,height:isMobile?40:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center",background:showSearch?C.amberPale:C.surfaceAlt,borderColor:showSearch?C.amberMid:C.border }}><Ic.Search c={showSearch?C.amber:C.inkMid}/></button>
+              {!isMobile&&<button className="bs-btn" onClick={()=>setShowAccount(true)} style={{ width:36,height:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }} title="Your account"><Ic.Person c={C.inkMid}/></button>}
+              <button className="bs-btn" onClick={()=>setShowSettings(true)} style={{ width:isMobile?40:36,height:isMobile?40:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }} title="Preferences"><Ic.Settings c={C.inkMid}/></button>
+              <button className="bs-btn" onClick={()=>setDark(v=>!v)} style={{ width:isMobile?40:36,height:isMobile?40:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }}>
                 {dark?<Ic.Sun c={C.amber}/>:<Ic.Moon c={C.inkMid}/>}
               </button>
             </div>
@@ -270,8 +271,8 @@ export default function App() {
       {/* ── MOOD BAR ────────────────────────────────────────────── */}
       <div style={{ background:C.surfaceAlt,borderBottom:`1px solid ${C.border}`,padding:`0 ${isMobile?"14px":"28px"}`,transition:"background 0.25s" }}>
         <div style={{ maxWidth:1160,margin:"0 auto" }}>
-          <div style={{ display:"flex",alignItems:"center",gap:10,overflowX:"auto",scrollbarWidth:"none",padding:"8px 0" }}>
-            <span style={{ fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:C.inkLight,flexShrink:0 }}>Mood</span>
+          <div style={{ display:"flex",alignItems:"center",gap:8,overflowX:"auto",scrollbarWidth:"none",padding:"8px 0" }}>
+            {!isMobile&&<span style={{ fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:C.inkLight,flexShrink:0 }}>Mood</span>}
             {Object.keys(MOOD_CONFIG).map(m=>(
               <button key={m} className={`bs-mood${activeMood===m?" on":""}`} onClick={()=>setActiveMood(activeMood===m?null:m)}>{m}</button>
             ))}
@@ -364,14 +365,14 @@ export default function App() {
                         <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:isMobile?21:27,fontWeight:400,lineHeight:1.2,marginBottom:13,color:C.ink }}>{featured.title}</div>
                         <div style={{ fontSize:isMobile?13:14,lineHeight:1.75,color:C.inkMid }}>{featured.summary}</div>
                       </div>
-                      <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:18,paddingTop:14,borderTop:`1px solid ${C.borderLight}`,flexWrap:"wrap",gap:8 }}>
-                        <div style={{ fontSize:11,color:C.inkLight }}>{featured.source} · {featured.time}</div>
-                        <div style={{ display:"flex",gap:7,alignItems:"center" }} onClick={e=>e.stopPropagation()}>
-                          <button onClick={e=>toggleLove(featured.id,e)} style={{ display:"flex",alignItems:"center",gap:5,padding:"6px 12px",borderRadius:20,background:lovedStories.has(featured.id)?C.amberPale:C.surface,border:`1px solid ${lovedStories.has(featured.id)?C.amber:C.border}`,cursor:"pointer",transition:"all 0.15s" }}>
-                            <Ic.Heart c={lovedStories.has(featured.id)?C.amber:C.inkLight} f={lovedStories.has(featured.id)} s={13}/>
+                      <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:18,paddingTop:14,borderTop:`1px solid ${C.borderLight}`,gap:8 }}>
+                        <div style={{ fontSize:11,color:C.inkLight,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{featured.source} · {featured.time}</div>
+                        <div style={{ display:"flex",gap:7,alignItems:"center",flexShrink:0 }} onClick={e=>e.stopPropagation()}>
+                          <button onClick={e=>toggleLove(featured.id,e)} style={{ display:"flex",alignItems:"center",gap:5,padding:isMobile?"8px 12px":"6px 12px",borderRadius:20,background:lovedStories.has(featured.id)?C.amberPale:C.surface,border:`1px solid ${lovedStories.has(featured.id)?C.amber:C.border}`,cursor:"pointer",transition:"all 0.15s" }}>
+                            <span style={{ display:"inline-flex",animation:justLovedId===featured.id?"bsHeartPop 0.35s ease":undefined }}><Ic.Heart c={lovedStories.has(featured.id)?C.amber:C.inkLight} f={lovedStories.has(featured.id)} s={13}/></span>
                             <span style={{ fontSize:12,fontWeight:600,color:lovedStories.has(featured.id)?C.amber:C.inkMid }}>{(featured.loves+(lovedStories.has(featured.id)?1:0)).toLocaleString()}</span>
                           </button>
-                          <button onClick={e=>{e.stopPropagation();setShareStory(featured);}} className="bs-btn">Share</button>
+                          {!isMobile&&<button onClick={e=>{e.stopPropagation();setShareStory(featured);}} className="bs-btn">Share</button>}
                           <button onClick={()=>openStoryModal(featured)} className="bs-btn bs-btn-dark">Read</button>
                         </div>
                       </div>
@@ -403,7 +404,7 @@ export default function App() {
                         onLove={e=>toggleLove(story.id,e)} onSave={e=>toggleSave(story.id,e)}
                         onShare={e=>{e?.stopPropagation();setShareStory(story);}}
                         onUnsee={e=>{e?.stopPropagation();unseeStory(story.id);}}
-                        onClick={()=>openStoryModal(story)} C={C} dark={dark} delay={i*0.04} justLovedId={justLovedId}/>
+                        onClick={()=>openStoryModal(story)} C={C} dark={dark} delay={i*0.04} justLovedId={justLovedId} isMobile={isMobile}/>
                     ))}
                   </div>
                 </section>
@@ -465,9 +466,9 @@ export default function App() {
       {/* ── MOBILE BOTTOM NAV ─────────────────────────────────────── */}
       {isMobile&&(
         <nav className="bs-bottom-nav">
-          {[{id:"home",l:"Home",I:({c})=><Ic.Home c={c}/>},{id:"explore",l:"Explore",I:({c})=><Ic.Compass c={c}/>},{id:"saved",l:"Saved",I:({c})=><Ic.Saved c={c}/>},{id:"digest",l:"Digest",I:({c})=><Ic.Menu c={c}/>}].map(item=>{
-            const active=item.id!=="digest"&&mobileTab===item.id;
-            return(<button key={item.id} className="bs-nav-btn" onClick={()=>item.id==="digest"?setShowDigest(true):setMobileTab(item.id)}>
+          {[{id:"home",l:"Home",I:({c})=><Ic.Home c={c}/>},{id:"explore",l:"Explore",I:({c})=><Ic.Compass c={c}/>},{id:"saved",l:"Saved",I:({c})=><Ic.Saved c={c}/>},{id:"account",l:"Account",I:({c})=><Ic.Person c={c}/>}].map(item=>{
+            const active=item.id!=="account"&&mobileTab===item.id;
+            return(<button key={item.id} className="bs-nav-btn" onClick={()=>item.id==="account"?setShowAccount(true):setMobileTab(item.id)}>
               <item.I c={active?C.amber:C.inkLight}/>
               <span className="bs-nav-label" style={{ color:active?C.amber:C.inkLight }}>{item.l}</span>
             </button>);
