@@ -15,6 +15,7 @@ import DigestModal from "./components/modals/DigestModal";
 import AccountModal from "./components/modals/AccountModal";
 import HowWeFilterModal from "./components/modals/HowWeFilterModal";
 import StoryModal from "./components/modals/StoryModal";
+import SwipeMode from "./components/SwipeMode";
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
@@ -89,6 +90,8 @@ export default function App() {
   const [justLovedId,   setJustLovedId]     = useState(null);
   const [toast,         setToast]           = useState(null);
   const [readCount,     setReadCount]       = useState(0);
+  const [showSwipe,     setShowSwipe]       = useState(false);
+  const [swipeNew,      setSwipeNew]        = useState(()=>!LS.get("bs-swipe-seen",false));
 
   // ── Streak — real persistence via localStorage ──
   const [streakData, setStreakData] = useState(() => {
@@ -168,7 +171,17 @@ export default function App() {
   const grid      = visible.slice(1);
   const mostLoved = [...STORIES].filter(s=>!unseenStories.has(s.id)&&prefs.categories.includes(s.category)).sort((a,b)=>b.loves-a.loves).slice(0,6);
   const nearYou   = [...STORIES].filter(s=>!unseenStories.has(s.id)&&s.radius>0&&prefs.categories.includes(s.category)).sort((a,b)=>a.radius-b.radius).slice(0,5);
-  const savedList = STORIES.filter(s=>savedStories.has(s.id));
+  const savedList   = STORIES.filter(s=>savedStories.has(s.id));
+  const swipeStories = useMemo(()=>
+    [...STORIES]
+      .filter(s=>!unseenStories.has(s.id)&&prefs.categories.includes(s.category))
+      .sort((a,b)=>((a.id*7+3)%11)-((b.id*7+3)%11))
+  ,[unseenStories,prefs.categories]);
+
+  const openSwipe = useCallback(()=>{
+    setShowSwipe(true);
+    if (swipeNew) { LS.set("bs-swipe-seen",true); setSwipeNew(false); }
+  },[swipeNew]);
 
   const featAcc = featured ? cAcc(featured.category,dark) : C.amber;
   const featBg  = featured ? cBg(featured.category,dark)  : C.surfaceAlt;
@@ -219,6 +232,8 @@ export default function App() {
         @keyframes bsSunPulse{0%,100%{opacity:0.5;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
         @keyframes bsHeartPop{0%{transform:scale(1)}35%{transform:scale(1.5)}65%{transform:scale(0.88)}100%{transform:scale(1)}}
         @keyframes bsToastIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+        @keyframes bsNewPing{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.25);opacity:0.7}}
+        .bs-new-badge{animation:bsNewPing 1.8s ease-in-out infinite}
       `}</style>
 
       {/* ── HEADER ─────────────────────────────────────────────── */}
@@ -243,6 +258,12 @@ export default function App() {
                 </div>
               )}
               {!isMobile&&<button className="bs-btn" onClick={()=>setShowDigest(true)}>Daily Digest</button>}
+              {!isMobile&&(
+                <button className="bs-btn" onClick={openSwipe} style={{ position:"relative" }}>
+                  Discover
+                  {swipeNew&&<span className="bs-new-badge" style={{ position:"absolute",top:-5,right:-5,background:C.amber,color:"#fff",borderRadius:4,padding:"1px 5px",fontSize:8,fontWeight:800,letterSpacing:"0.06em",lineHeight:1.4 }}>NEW</span>}
+                </button>
+              )}
               <button aria-label="Search" className="bs-btn" onClick={()=>setShowSearch(v=>!v)} style={{ width:isMobile?40:36,height:isMobile?40:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center",background:showSearch?C.amberPale:C.surfaceAlt,borderColor:showSearch?C.amberMid:C.border }}><Ic.Search c={showSearch?C.amber:C.inkMid}/></button>
               <button aria-label="Your account" className="bs-btn" onClick={()=>setShowAccount(true)} style={{ width:isMobile?40:36,height:isMobile?40:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }}><Ic.Person c={C.inkMid}/></button>
               <button aria-label="Preferences" className="bs-btn" onClick={()=>setShowSettings(true)} style={{ width:isMobile?40:36,height:isMobile?40:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }}><Ic.Settings c={C.inkMid}/></button>
@@ -466,12 +487,23 @@ export default function App() {
       {/* ── MOBILE BOTTOM NAV ─────────────────────────────────────── */}
       {isMobile&&(
         <nav className="bs-bottom-nav">
-          {[{id:"home",l:"Home",I:({c})=><Ic.Home c={c}/>},{id:"explore",l:"Explore",I:({c})=><Ic.Compass c={c}/>},{id:"saved",l:"Saved",I:({c})=><Ic.Saved c={c}/>},{id:"digest",l:"Digest",I:({c})=><Ic.Sun c={c}/>}].map(item=>{
-            const active=item.id!=="digest"&&mobileTab===item.id;
-            return(<button key={item.id} className="bs-nav-btn" aria-label={item.l} onClick={()=>item.id==="digest"?setShowDigest(true):setMobileTab(item.id)}>
-              <item.I c={active?C.amber:C.inkLight}/>
-              <span className="bs-nav-label" style={{ color:active?C.amber:C.inkLight }}>{item.l}</span>
-            </button>);
+          {[
+          {id:"home",    l:"Home",     special:null,      I:({c})=><Ic.Home c={c}/>},
+          {id:"discover",l:"Discover", special:"swipe",   I:({c})=><Ic.Cards c={c}/>},
+          {id:"saved",   l:"Saved",    special:null,      I:({c})=><Ic.Saved c={c}/>},
+          {id:"digest",  l:"Digest",   special:"digest",  I:({c})=><Ic.Sun c={c}/>},
+        ].map(item=>{
+            const active = !item.special && mobileTab===item.id;
+            const onClick = item.special==="swipe" ? openSwipe : item.special==="digest" ? ()=>setShowDigest(true) : ()=>setMobileTab(item.id);
+            return(
+              <button key={item.id} className="bs-nav-btn" aria-label={item.l} onClick={onClick} style={{ position:"relative" }}>
+                <item.I c={active?C.amber:C.inkLight}/>
+                {item.id==="discover"&&swipeNew&&(
+                  <span className="bs-new-badge" style={{ position:"absolute",top:6,right:"calc(50% - 14px)",background:C.amber,color:"#fff",borderRadius:3,padding:"1px 4px",fontSize:7,fontWeight:800,letterSpacing:"0.05em",lineHeight:1.4 }}>NEW</span>
+                )}
+                <span className="bs-nav-label" style={{ color:active?C.amber:C.inkLight }}>{item.l}</span>
+              </button>
+            );
           })}
         </nav>
       )}
@@ -483,6 +515,7 @@ export default function App() {
       {showSettings&&<SettingsPanel C={C} dark={dark} prefs={prefs} onUpdate={updatePrefs} onClose={()=>setShowSettings(false)} onResetOnboarding={resetOnboarding} onHowWeFilter={()=>{setShowSettings(false);setShowHowWeFilter(true);}}/>}
       {showAccount&&<AccountModal onClose={()=>setShowAccount(false)} C={C} dark={dark} prefs={prefs} streak={streak} lovedCount={lovedStories.size} savedCount={savedStories.size} onResetOnboarding={resetOnboarding}/>}
       {showHowWeFilter&&<HowWeFilterModal onClose={()=>setShowHowWeFilter(false)} C={C}/>}
+      {showSwipe&&<SwipeMode stories={swipeStories} lovedSet={lovedStories} onLove={id=>toggleLove(id)} onPass={id=>unseeStory(id)} onOpen={openStoryModal} onClose={()=>setShowSwipe(false)} C={C} dark={dark} isMobile={isMobile}/>}
 
       {/* ── TOAST ──────────────────────────────────────────────── */}
       {toast&&(

@@ -16,4 +16,5 @@ export const Ic = {
   Sparkle:  ({c,s=22})=><svg width={s} height={s} viewBox="0 0 22 22" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round"><path d="M11 2l2 7h7l-5.5 4 2 7L11 16l-5.5 4 2-7L2 9h7z"/></svg>,
   Person:   ({c,s=18})=><svg width={s} height={s} viewBox="0 0 18 18" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round"><circle cx="9" cy="6" r="3.5"/><path d="M1.5 17c0-4 3.4-7 7.5-7s7.5 3 7.5 7"/></svg>,
   Info:     ({c,s=18})=><svg width={s} height={s} viewBox="0 0 18 18" fill="none" stroke={c} strokeWidth="1.5" strokeLinecap="round"><circle cx="9" cy="9" r="7.5"/><line x1="9" y1="8.5" x2="9" y2="13"/><circle cx="9" cy="5.5" r="0.75" fill={c} stroke="none"/></svg>,
+  Cards:    ({c,s=22})=><svg width={s} height={s} viewBox="0 0 22 22" fill="none" aria-hidden="true"><rect x="2" y="6" width="13" height="12" rx="2" stroke={c} strokeWidth="1.5" strokeOpacity="0.4"/><rect x="7" y="4" width="13" height="12" rx="2" stroke={c} strokeWidth="1.5" fill="none"/><path d="M10 13l2-2 2 2" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" opacity="0.6"/></svg>,
 };
