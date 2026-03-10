@@ -74,6 +74,7 @@ export default function App() {
   const [unseenStories, setUnseenStories]   = useState(()=>new Set(LS.get("bs-unseen",[])));
   const [activeMood,    setActiveMood]      = useState(prefs.mood);
   const [radiusKm,      setRadiusKm]        = useState(50);
+  const [userLocation,  setUserLocation]    = useState(null); // { lat, lng }
   const [shareStory,    setShareStory]      = useState(null);
   const [openStory,     setOpenStory]       = useState(null);
   const [showDigest,    setShowDigest]      = useState(false);
@@ -97,7 +98,7 @@ export default function App() {
   const suggTimerRef = useRef(null);
 
   // ── Live feed data ──
-  const { stories, loading: feedLoading, error: feedError } = useFeed(activeCategory, feedKey);
+  const { stories, loading: feedLoading, error: feedError } = useFeed(activeCategory, feedKey, activeCategory === "local" ? userLocation : null);
   // Separate full-pool fetch for Discover — not tied to activeCategory
   const { stories: allStories } = useFeed("all", feedKey);
 
@@ -154,6 +155,16 @@ export default function App() {
   const toggleSave = useCallback((id,e)=>{e?.stopPropagation();setSavedStories(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);LS.set("bs-saved",[...n]);return n;});},[]);
   const unseeStory = useCallback((id)=>{setUnseenStories(p=>{const n=new Set([...p,id]);LS.set("bs-unseen",[...n]);return n;});},[]);
   const openStoryModal = useCallback((story)=>{setOpenStory(story);setReadCount(c=>c+1);},[]);
+
+  const handleSetCategory = useCallback((cat) => {
+    setActiveCategory(cat);
+    if (cat === "local" && !userLocation && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {} // silently ignore denial
+      );
+    }
+  }, [userLocation]);
 
   const handleTagClick = useCallback((tag) => {
     setActiveTag(prev => prev && prev.toLowerCase()===tag.toLowerCase() ? null : tag);
@@ -293,9 +304,9 @@ export default function App() {
 
           {!isMobile&&(
             <div style={{ display:"flex",gap:2,alignItems:"center",overflowX:"auto",scrollbarWidth:"none",borderTop:`1px solid ${C.border}`,paddingTop:7,paddingBottom:9 }}>
-              <button className={`bs-cat${activeCategory==="all"?" on":""}`} onClick={()=>setActiveCategory("all")}>Your Feed</button>
+              <button className={`bs-cat${activeCategory==="all"?" on":""}`} onClick={()=>handleSetCategory("all")}>Your Feed</button>
               {CATS.filter(c=>prefs.categories.includes(c.id)).map(cat=>(
-                <button key={cat.id} className={`bs-cat${activeCategory===cat.id?" on":""}`} onClick={()=>setActiveCategory(cat.id)}>{cat.label}</button>
+                <button key={cat.id} className={`bs-cat${activeCategory===cat.id?" on":""}`} onClick={()=>handleSetCategory(cat.id)}>{cat.label}</button>
               ))}
               {prefs.categories.length < CATS.length && (
                 <button className="bs-cat" onClick={()=>setShowSettings(true)} style={{ color:C.inkLight,fontStyle:"italic" }}>+ more sections</button>
@@ -312,9 +323,9 @@ export default function App() {
       {/* ── MOBILE CAT + MOOD TABS ── */}
       {isMobile&&(
         <div style={{ background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"7px 14px",overflowX:"auto",scrollbarWidth:"none",display:"flex",gap:5,alignItems:"center" }}>
-          <button className={`bs-cat${activeCategory==="all"?" on":""}`} style={{ fontSize:12,padding:"5px 10px" }} onClick={()=>{setActiveCategory("all");setMobileTab("home");}}>Your Feed</button>
+          <button className={`bs-cat${activeCategory==="all"?" on":""}`} style={{ fontSize:12,padding:"5px 10px" }} onClick={()=>{handleSetCategory("all");setMobileTab("home");}}>Your Feed</button>
           {CATS.filter(c=>prefs.categories.includes(c.id)).map(cat=>(
-            <button key={cat.id} className={`bs-cat${activeCategory===cat.id?" on":""}`} style={{ fontSize:12,padding:"5px 10px" }} onClick={()=>{setActiveCategory(cat.id);setMobileTab("home");}}>{cat.label}</button>
+            <button key={cat.id} className={`bs-cat${activeCategory===cat.id?" on":""}`} style={{ fontSize:12,padding:"5px 10px" }} onClick={()=>{handleSetCategory(cat.id);setMobileTab("home");}}>{cat.label}</button>
           ))}
           <div style={{ width:1,background:C.border,flexShrink:0,margin:"3px 4px",alignSelf:"stretch" }}/>
           {Object.keys(MOOD_CONFIG).map(m=>(
@@ -378,7 +389,7 @@ export default function App() {
             <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
               {CATS.map(cat=>{
                 const acc=cAcc(cat.id,dark), bg=cBg(cat.id,dark), on=prefs.categories.includes(cat.id);
-                return(<button key={cat.id} onClick={()=>{setActiveCategory(cat.id);setMobileTab("home");}} style={{ background:bg,border:`1.5px solid ${on?acc:C.border}`,borderRadius:12,padding:"16px 14px",cursor:"pointer",textAlign:"left",display:"flex",flexDirection:"column",gap:7,position:"relative" }}>
+                return(<button key={cat.id} onClick={()=>{handleSetCategory(cat.id);setMobileTab("home");}} style={{ background:bg,border:`1.5px solid ${on?acc:C.border}`,borderRadius:12,padding:"16px 14px",cursor:"pointer",textAlign:"left",display:"flex",flexDirection:"column",gap:7,position:"relative" }}>
                   {!on&&<div style={{ position:"absolute",top:8,right:8,fontSize:9,fontWeight:700,color:C.inkLight,background:C.surfaceAlt,borderRadius:4,padding:"2px 6px" }}>hidden</div>}
                   <div style={{ width:28,height:28,borderRadius:8,background:`${acc}22`,display:"flex",alignItems:"center",justifyContent:"center" }}><div style={{ width:10,height:10,borderRadius:"50%",background:acc }}/></div>
                   <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:15,color:C.ink }}>{cat.label}</div>
@@ -416,7 +427,7 @@ export default function App() {
                 ? <EmptyState reason="local"     C={C} onExpandRadius={()=>setRadiusKm(100)} activeCategory={activeCategory} radiusKm={radiusKm}/>
                 : activeMood
                 ? <EmptyState reason="mood"      C={C} onSwitchCategory={()=>setActiveMood(null)} onOpenSettings={()=>setShowSettings(true)} activeCategory={activeCategory} radiusKm={radiusKm}/>
-                : <EmptyState reason="category"  C={C} onSwitchCategory={()=>setActiveCategory("all")} onOpenSettings={()=>setShowSettings(true)} activeCategory={activeCategory} radiusKm={radiusKm}/>
+                : <EmptyState reason="category"  C={C} onSwitchCategory={()=>handleSetCategory("all")} onOpenSettings={()=>setShowSettings(true)} activeCategory={activeCategory} radiusKm={radiusKm}/>
             ):<>
               {/* Hero */}
               {featured&&(

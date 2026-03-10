@@ -9,15 +9,15 @@ const CATEGORY_QUERY_MAP = {
   },
   discover: {
     q: 'discovery OR breakthrough OR "new research" OR innovation OR "space exploration"',
-    section: "science,technology",
+    section: "science|technology",
   },
   community: {
     q: 'community OR volunteer OR charity OR "local hero" OR fundraising OR kindness',
-    section: "society,uk-news",
+    section: "society|uk-news",
   },
   wellness: {
     q: 'wellbeing OR "mental health" OR fitness OR mindfulness OR recovery OR "healthy living"',
-    section: "lifeandstyle,society",
+    section: "lifeandstyle|society",
   },
   world: {
     q: 'aid OR humanitarian OR "peace deal" OR development OR "global health" OR diplomacy',
@@ -25,7 +25,7 @@ const CATEGORY_QUERY_MAP = {
   },
   politics: {
     q: 'reform OR legislation OR "new law" OR bipartisan OR passed OR "signed into law"',
-    section: "politics,us-news",
+    section: "politics|us-news",
   },
   local: {
     q: 'community OR neighbourhood OR "local council" OR "town centre" OR "high street"',
@@ -33,7 +33,7 @@ const CATEGORY_QUERY_MAP = {
   },
   ideas: {
     q: 'creativity OR design OR "new book" OR arts OR architecture OR startup OR invention',
-    section: "culture,technology,books",
+    section: "culture|technology|books",
   },
   all: {
     q: 'breakthrough OR recovery OR conservation OR volunteer OR innovation OR kindness OR discovery',
@@ -219,8 +219,23 @@ function mapToStory(article, requestedCategory) {
 
 // ─── Handler ───────────────────────────────────────────────────────────────────
 
+// Rough lat/lng → Guardian region tag
+function regionTag(lat, lng) {
+  if (!lat || !lng) return null;
+  const la = parseFloat(lat), lo = parseFloat(lng);
+  // UK
+  if (la > 49 && la < 61 && lo > -8 && lo < 2)  return "uk/uk";
+  // US
+  if (la > 24 && la < 50 && lo > -125 && lo < -66) return "world/usa";
+  // Australia
+  if (la > -44 && la < -10 && lo > 113 && lo < 154) return "world/australia";
+  // Canada
+  if (la > 42 && la < 84 && lo > -141 && lo < -52) return "world/canada";
+  return null;
+}
+
 export default async function handler(req, res) {
-  const { category = "all", page = 1 } = req.query;
+  const { category = "all", page = 1, lat, lng } = req.query;
   const key = process.env.GUARDIAN_API_KEY;
 
   if (!key) {
@@ -230,13 +245,16 @@ export default async function handler(req, res) {
 
   const query = CATEGORY_QUERY_MAP[category] || CATEGORY_QUERY_MAP.all;
 
+  // For local, add a region tag filter if we have coordinates
+  const tag = category === "local" ? regionTag(lat, lng) : null;
+
   const url =
     `https://content.guardianapis.com/search` +
     `?q=${encodeURIComponent(query.q)}` +
-    (query.section ? `&section=${encodeURIComponent(query.section)}` : "") +
+    (query.section ? `&section=${query.section}` : "") +
     `&page-size=30&order-by=newest&page=${page}` +
     `&show-fields=trailText,wordcount,byline,bodyText` +
-    `&tag=type/article` +
+    (tag ? `&tag=${encodeURIComponent(tag)}` : `&tag=type/article`) +
     `&api-key=${key}`;
 
   let data;

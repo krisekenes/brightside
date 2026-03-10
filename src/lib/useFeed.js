@@ -3,13 +3,15 @@ import { STORIES } from "./data";
 
 const CATEGORIES = ["nature", "discover", "community", "wellness", "world", "politics", "local", "ideas"];
 
-export function useFeed(category = "all", refreshKey = 0) {
+export function useFeed(category = "all", refreshKey = 0, location = null) {
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
 
   useEffect(() => {
     setLoading(true);
+
+    const locationSuffix = location ? `&lat=${location.lat}&lng=${location.lng}` : "";
 
     // When category is "all", fetch all 8 categories in parallel so the
     // frontend can filter by prefs.categories correctly.
@@ -21,7 +23,7 @@ export function useFeed(category = "all", refreshKey = 0) {
             .catch(() => [])
         )
       : [
-          fetch(`/api/feed?category=${encodeURIComponent(category)}`)
+          fetch(`/api/feed?category=${encodeURIComponent(category)}${locationSuffix}`)
             .then(r => { if (!r.ok) throw new Error(`Feed API ${r.status}`); return r.json(); })
             .then(d => d.stories || [])
         ];
@@ -36,7 +38,7 @@ export function useFeed(category = "all", refreshKey = 0) {
       })
       .catch(e => { setError(e); setStories(STORIES); })
       .finally(() => setLoading(false));
-  }, [category, refreshKey]);
+  }, [category, refreshKey, location]);
 
   return { stories, loading, error };
 }
