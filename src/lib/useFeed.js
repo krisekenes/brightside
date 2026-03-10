@@ -4,8 +4,8 @@ import { STORIES } from "./data";
 const CATEGORIES = ["nature", "discover", "community", "wellness", "world", "politics", "local", "ideas"];
 
 export function useFeed(category = "all") {
-  const [stories, setStories] = useState(STORIES);
-  const [loading, setLoading] = useState(false);
+  const [stories, setStories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export function useFeed(category = "all") {
           setError(null);
         }
       })
-      .catch(e => setError(e))
+      .catch(e => { setError(e); setStories(STORIES); })
       .finally(() => setLoading(false));
   }, [category]);
 

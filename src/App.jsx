@@ -16,6 +16,7 @@ import AccountModal from "./components/modals/AccountModal";
 import HowWeFilterModal from "./components/modals/HowWeFilterModal";
 import StoryModal from "./components/modals/StoryModal";
 import SwipeMode from "./components/SwipeMode";
+import FeedSkeleton from "./components/FeedSkeleton";
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
@@ -252,7 +253,7 @@ export default function App() {
         @keyframes bsToastIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
         @keyframes bsNewPing{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.25);opacity:0.7}}
         .bs-new-badge{animation:bsNewPing 1.8s ease-in-out infinite}
-        @keyframes bsFeedLoad{0%{transform:scaleX(0)}60%{transform:scaleX(0.8)}100%{transform:scaleX(1);opacity:0}}
+        @keyframes bsShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
       `}</style>
 
       {/* ── HEADER ─────────────────────────────────────────────── */}
@@ -362,13 +363,6 @@ export default function App() {
         </div>
       )}
 
-      {/* ── FEED LOADING INDICATOR ───────────────────────────────── */}
-      {feedLoading&&(
-        <div style={{ position:"fixed",top:0,left:0,right:0,height:2,zIndex:200,overflow:"hidden" }}>
-          <div style={{ height:"100%",background:C.amber,animation:"bsFeedLoad 1.4s ease infinite",transformOrigin:"left center" }}/>
-        </div>
-      )}
-
       {/* ── MAIN ─────────────────────────────────────────────────── */}
       <main style={{ maxWidth:1160,margin:"0 auto",padding:`26px ${isMobile?"14px":"28px"} ${isMobile?"88px":"40px"}` }}>
 
@@ -416,7 +410,9 @@ export default function App() {
               </div>
             )}
 
-            {visible.length===0?(
+            {feedLoading&&stories.length===0?(
+              <FeedSkeleton C={C} isMobile={isMobile}/>
+            ):visible.length===0?(
               // ── Context-aware empty states ──
               searchQuery
                 ? <EmptyState reason="search"    C={C} onClearSearch={()=>setSearchQuery("")} activeCategory={activeCategory} radiusKm={radiusKm}/>
