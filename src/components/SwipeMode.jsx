@@ -10,6 +10,7 @@ export default function SwipeMode({ stories, lovedSet, onLove, onPass, onOpen, o
   const [drag,       setDrag]       = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [flyDir,     setFlyDir]     = useState(null); // 'left' | 'right'
+  const [cardIn,     setCardIn]     = useState(true);
   const startRef  = useRef(null);
   const movedRef  = useRef(false);
 
@@ -22,9 +23,11 @@ export default function SwipeMode({ stories, lovedSet, onLove, onPass, onOpen, o
     setTimeout(() => {
       if (dir === "right") onLove(stories[index].id);
       else                 onPass(stories[index].id);
+      setCardIn(false);
       setIndex(i => i + 1);
       setFlyDir(null);
       setDrag({ x: 0, y: 0 });
+      setTimeout(() => setCardIn(true), 80);
     }, 320);
   }, [flyDir, index, stories, onLove, onPass]);
 
@@ -134,8 +137,8 @@ export default function SwipeMode({ stories, lovedSet, onLove, onPass, onOpen, o
                     position:"relative",width:"100%",maxWidth:420,height:cardH,
                     background:bg,borderRadius:16,border:`1px solid ${C.border}`,overflow:"hidden",
                     transform:`translateX(${dispX}px) translateY(${dispY}px) rotate(${rot}deg)`,
-                    transition: flyDir ? "transform 0.32s ease, opacity 0.32s ease" : isDragging ? "none" : "transform 0.2s ease",
-                    opacity:flyDir ? 0 : 1,
+                    transition: flyDir ? "transform 0.32s ease, opacity 0.32s ease" : isDragging ? "none" : "transform 0.2s ease, opacity 0.18s ease",
+                    opacity:flyDir ? 0 : cardIn ? 1 : 0,
                     cursor:isDragging ? "grabbing" : "grab",
                     touchAction:"none",userSelect:"none",willChange:"transform",
                   }}
