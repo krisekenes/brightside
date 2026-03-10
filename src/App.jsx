@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { LIGHT, DARK, cAcc, cBg } from "./lib/theme";
 import { MOOD_CONFIG, moodScore } from "./lib/mood";
 import { LS } from "./lib/storage";
 import { CATS, STORIES } from "./lib/data";
 import { Ic } from "./icons";
-import Onboarding from "./components/Onboarding";
 import SettingsPanel from "./components/SettingsPanel";
 import StoryCard from "./components/StoryCard";
 import StoryRail from "./components/StoryRail";
@@ -47,25 +46,21 @@ export default function App() {
     }
   });
 
-  const completeOnboarding = useCallback((p) => {
-    const newPrefs = { categories: p.categories, mood: p.mood };
-    LS.set("bs-prefs", newPrefs);
-    LS.set("bs-onboarded", true);
-    setPrefs(newPrefs);
-    setHasOnboarded(true);
-    setActiveMood(p.mood);
-    setActiveCategory("all");
-  }, []);
-
   const updatePrefs = useCallback((p) => {
     LS.set("bs-prefs", p);
+    LS.set("bs-onboarded", true);
+    LS.set("bs-nudge-dismissed", true);
     setPrefs(p);
     setActiveMood(p.mood);
+    setHasOnboarded(true);
+    setNudgeDismissed(true);
   }, []);
 
   const resetOnboarding = useCallback(() => {
     LS.set("bs-onboarded", false);
+    LS.set("bs-nudge-dismissed", false);
     setHasOnboarded(false);
+    setNudgeDismissed(false);
     setShowSettings(false);
     setShowAccount(false);
   }, []);
@@ -92,6 +87,11 @@ export default function App() {
   const [readCount,     setReadCount]       = useState(0);
   const [showSwipe,     setShowSwipe]       = useState(false);
   const [swipeNew,      setSwipeNew]        = useState(()=>!LS.get("bs-swipe-seen",false));
+  const [nudgeDismissed,setNudgeDismissed]  = useState(()=>LS.get("bs-nudge-dismissed",false));
+  const [activeTag,     setActiveTag]       = useState(null);
+  const [tagHistory,    setTagHistory]      = useState({});
+  const [moodSuggestion,setMoodSuggestion]  = useState(null);
+  const suggTimerRef = useRef(null);
 
   // ── Streak — real persistence via localStorage ──
   const [streakData, setStreakData] = useState(() => {
@@ -146,6 +146,27 @@ export default function App() {
   const unseeStory = useCallback((id)=>{setUnseenStories(p=>new Set([...p,id]));},[]);
   const openStoryModal = useCallback((story)=>{setOpenStory(story);setReadCount(c=>c+1);},[]);
 
+  const handleTagClick = useCallback((tag) => {
+    setActiveTag(prev => prev && prev.toLowerCase()===tag.toLowerCase() ? null : tag);
+    const key = tag.toLowerCase();
+    setTagHistory(prev => ({ ...prev, [key]: (prev[key]||0) + 1 }));
+  }, []);
+
+  // Mood suggestion — fire when tag history crosses threshold for a mood
+  useEffect(() => {
+    if (activeMood || moodSuggestion) return;
+    for (const [mood, cfg] of Object.entries(MOOD_CONFIG)) {
+      const total = cfg.storyTags.reduce((s,t) => s + (tagHistory[t]||0), 0);
+      if (total >= 3) {
+        setMoodSuggestion(mood);
+        suggTimerRef.current = setTimeout(() => setMoodSuggestion(null), 8000);
+        setTagHistory({});
+        break;
+      }
+    }
+    return () => { if (suggTimerRef.current) clearTimeout(suggTimerRef.current); };
+  }, [tagHistory, activeMood, moodSuggestion]);
+
   const [isMobile, setIsMobile] = useState(()=>window.innerWidth<640);
   useEffect(()=>{ const h=()=>setIsMobile(window.innerWidth<640); window.addEventListener("resize",h); return()=>window.removeEventListener("resize",h); },[]);
 
@@ -160,12 +181,13 @@ export default function App() {
         if(x.category!==activeCategory) return false;
       }
       if(activeCategory==="local"&&x.radius>radiusKm) return false;
+      if(activeTag && x.tag.toLowerCase()!==activeTag.toLowerCase()) return false;
       if(searchQuery){ const q=searchQuery.toLowerCase(); return x.title.toLowerCase().includes(q)||x.summary.toLowerCase().includes(q); }
       return true;
     });
     if(activeMood) s=[...s].sort((a,b)=>{ const d=moodScore(b,activeMood)-moodScore(a,activeMood); return Math.abs(d)>0.05?d:b.loves-a.loves; });
     return s;
-  },[unseenStories,activeCategory,radiusKm,searchQuery,activeMood,prefs.categories]);
+  },[unseenStories,activeCategory,radiusKm,searchQuery,activeMood,prefs.categories,activeTag]);
 
   const featured  = visible[0];
   const grid      = visible.slice(1);
@@ -185,16 +207,6 @@ export default function App() {
 
   const featAcc = featured ? cAcc(featured.category,dark) : C.amber;
   const featBg  = featured ? cBg(featured.category,dark)  : C.surfaceAlt;
-
-  // ── Show onboarding for new users ──
-  if (!hasOnboarded) {
-    return (
-      <>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} @keyframes bsReadyPop{0%{transform:scale(0.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}`}</style>
-        <Onboarding C={C} dark={dark} onComplete={completeOnboarding}/>
-      </>
-    );
-  }
 
   return (
     <div style={{ fontFamily:"'DM Sans',sans-serif",background:C.bg,minHeight:"100vh",color:C.ink,transition:"background 0.25s,color 0.25s" }}>
@@ -276,7 +288,7 @@ export default function App() {
           {showSearch&&<div style={{ paddingBottom:10 }}><input autoFocus className="bs-search" placeholder="Search today's good news…" value={searchQuery} onChange={e=>setSearchQuery(e.target.value)}/></div>}
 
           {!isMobile&&(
-            <div style={{ display:"flex",gap:2,overflowX:"auto",scrollbarWidth:"none",borderTop:`1px solid ${C.border}`,paddingTop:7,paddingBottom:9 }}>
+            <div style={{ display:"flex",gap:2,alignItems:"center",overflowX:"auto",scrollbarWidth:"none",borderTop:`1px solid ${C.border}`,paddingTop:7,paddingBottom:9 }}>
               <button className={`bs-cat${activeCategory==="all"?" on":""}`} onClick={()=>setActiveCategory("all")}>Your Feed</button>
               {CATS.filter(c=>prefs.categories.includes(c.id)).map(cat=>(
                 <button key={cat.id} className={`bs-cat${activeCategory===cat.id?" on":""}`} onClick={()=>setActiveCategory(cat.id)}>{cat.label}</button>
@@ -284,29 +296,42 @@ export default function App() {
               {prefs.categories.length < CATS.length && (
                 <button className="bs-cat" onClick={()=>setShowSettings(true)} style={{ color:C.inkLight,fontStyle:"italic" }}>+ more sections</button>
               )}
+              <div style={{ width:1,background:C.border,flexShrink:0,margin:"3px 8px",alignSelf:"stretch" }}/>
+              {Object.keys(MOOD_CONFIG).map(m=>(
+                <button key={m} className={`bs-mood${activeMood===m?" on":""}`} onClick={()=>setActiveMood(activeMood===m?null:m)}>{m}</button>
+              ))}
             </div>
           )}
         </div>
       </header>
 
-      {/* ── MOOD BAR ────────────────────────────────────────────── */}
-      <div style={{ background:C.surfaceAlt,borderBottom:`1px solid ${C.border}`,padding:`0 ${isMobile?"14px":"28px"}`,transition:"background 0.25s" }}>
-        <div style={{ maxWidth:1160,margin:"0 auto" }}>
-          <div style={{ display:"flex",alignItems:"center",gap:8,overflowX:"auto",scrollbarWidth:"none",padding:"8px 0" }}>
-            {!isMobile&&<span style={{ fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:C.inkLight,flexShrink:0 }}>Mood</span>}
-            {Object.keys(MOOD_CONFIG).map(m=>(
-              <button key={m} className={`bs-mood${activeMood===m?" on":""}`} onClick={()=>setActiveMood(activeMood===m?null:m)}>{m}</button>
-            ))}
-          </div>
-          {activeMood&&(
-            <div style={{ display:"flex",alignItems:"center",gap:8,paddingBottom:8,animation:"bsRise 0.2s ease" }}>
-              <div style={{ width:3,height:13,borderRadius:2,background:C.amber,flexShrink:0 }}/>
-              <span style={{ fontSize:12,color:C.inkMid }}><strong style={{ color:C.amber,fontWeight:600 }}>{activeMood}</strong>{" — "}{MOOD_CONFIG[activeMood].description}</span>
-              <span style={{ fontSize:11,color:C.inkLight,marginLeft:"auto",flexShrink:0,whiteSpace:"nowrap" }}>{visible.length} {visible.length===1?"story":"stories"}</span>
-            </div>
-          )}
+      {/* ── MOBILE CAT + MOOD TABS ── */}
+      {isMobile&&(
+        <div style={{ background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"7px 14px",overflowX:"auto",scrollbarWidth:"none",display:"flex",gap:5,alignItems:"center" }}>
+          <button className={`bs-cat${activeCategory==="all"?" on":""}`} style={{ fontSize:12,padding:"5px 10px" }} onClick={()=>{setActiveCategory("all");setMobileTab("home");}}>Your Feed</button>
+          {CATS.filter(c=>prefs.categories.includes(c.id)).map(cat=>(
+            <button key={cat.id} className={`bs-cat${activeCategory===cat.id?" on":""}`} style={{ fontSize:12,padding:"5px 10px" }} onClick={()=>{setActiveCategory(cat.id);setMobileTab("home");}}>{cat.label}</button>
+          ))}
+          <div style={{ width:1,background:C.border,flexShrink:0,margin:"3px 4px",alignSelf:"stretch" }}/>
+          {Object.keys(MOOD_CONFIG).map(m=>(
+            <button key={m} className={`bs-mood${activeMood===m?" on":""}`} style={{ fontSize:11,padding:"4px 11px" }} onClick={()=>setActiveMood(activeMood===m?null:m)}>{m}</button>
+          ))}
         </div>
-      </div>
+      )}
+
+      {/* ── ACTIVE TAG FILTER CHIP ── */}
+      {activeTag&&(
+        <div style={{ background:C.surface,borderBottom:`1px solid ${C.border}`,padding:`6px ${isMobile?"14px":"28px"}` }}>
+          <div style={{ maxWidth:1160,margin:"0 auto",display:"flex",alignItems:"center",gap:8 }}>
+            <span style={{ fontSize:11,color:C.inkLight,fontWeight:500 }}>Tag:</span>
+            <span style={{ display:"inline-flex",alignItems:"center",gap:5,background:C.amberPale,border:`1px solid ${C.amberMid}`,borderRadius:20,padding:"3px 10px 3px 12px",fontSize:11,fontWeight:700,color:C.amber,textTransform:"uppercase",letterSpacing:"0.06em" }}>
+              {activeTag}
+              <button onClick={()=>setActiveTag(null)} aria-label="Clear tag filter" style={{ background:"none",border:"none",cursor:"pointer",color:C.amber,fontSize:15,lineHeight:1,padding:0,display:"flex",alignItems:"center" }}>×</button>
+            </span>
+            <span style={{ fontSize:11,color:C.inkLight,marginLeft:"auto" }}>{visible.length} {visible.length===1?"story":"stories"}</span>
+          </div>
+        </div>
+      )}
 
       {/* ── LOCAL RADIUS ── */}
       {activeCategory==="local"&&(
@@ -317,16 +342,6 @@ export default function App() {
             <span style={{ fontSize:13,fontWeight:700,color:cAcc("local",dark),flexShrink:0,minWidth:50 }}>{radiusKm} km</span>
             <span style={{ fontSize:12,color:C.inkLight }}>{visible.length} {visible.length===1?"story":"stories"}</span>
           </div>
-        </div>
-      )}
-
-      {/* ── MOBILE CAT TABS ── */}
-      {isMobile&&(
-        <div style={{ background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"7px 14px",overflowX:"auto",scrollbarWidth:"none",display:"flex",gap:5 }}>
-          <button className={`bs-cat${activeCategory==="all"?" on":""}`} style={{ fontSize:12,padding:"5px 10px" }} onClick={()=>{setActiveCategory("all");setMobileTab("home");}}>Your Feed</button>
-          {CATS.filter(c=>prefs.categories.includes(c.id)).map(cat=>(
-            <button key={cat.id} className={`bs-cat${activeCategory===cat.id?" on":""}`} style={{ fontSize:12,padding:"5px 10px" }} onClick={()=>{setActiveCategory(cat.id);setMobileTab("home");}}>{cat.label}</button>
-          ))}
         </div>
       )}
 
@@ -363,6 +378,20 @@ export default function App() {
         {/* Feed */}
         {(!isMobile||mobileTab==="home")&&(
           <>
+            {/* ── Personalisation nudge (new users) ── */}
+            {!hasOnboarded&&!nudgeDismissed&&(
+              <div style={{ background:C.amberPale,border:`1px solid ${C.amberMid}`,borderRadius:12,padding:isMobile?"16px 18px":"18px 24px",marginBottom:isMobile?20:28,display:"flex",alignItems:isMobile?"flex-start":"center",gap:16,flexDirection:isMobile?"column":"row" }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:isMobile?16:17,fontWeight:600,color:C.ink,marginBottom:4,letterSpacing:"-0.01em" }}>This is everyone's feed — make it yours</div>
+                  <div style={{ fontSize:13,color:C.inkMid,lineHeight:1.6 }}>Choose the sections that matter to you and set a default mood.</div>
+                </div>
+                <div style={{ display:"flex",gap:8,flexShrink:0,alignSelf:isMobile?"stretch":"center" }}>
+                  <button onClick={()=>setShowSettings(true)} style={{ background:C.amber,color:"#fff",border:"none",borderRadius:8,padding:"10px 18px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",flex:isMobile?1:undefined }}>Personalise</button>
+                  <button onClick={()=>updatePrefs(prefs)} className="bs-btn" style={{ flex:isMobile?1:undefined }}>Keep as is</button>
+                </div>
+              </div>
+            )}
+
             {visible.length===0?(
               // ── Context-aware empty states ──
               searchQuery
@@ -382,7 +411,7 @@ export default function App() {
                   <div onClick={()=>openStoryModal(featured)} className="bs-card bs-card-in" style={{ background:featBg,borderRadius:14,overflow:"hidden",border:`1px solid ${C.border}`,cursor:"pointer",display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 280px",minHeight:isMobile?"auto":280 }}>
                     <div style={{ padding:isMobile?"18px 18px 14px":"30px 34px",display:"flex",flexDirection:"column",justifyContent:"space-between" }}>
                       <div>
-                        <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:featAcc,marginBottom:11 }}>{featured.tag}</div>
+                        <div onClick={e=>{e.stopPropagation();handleTagClick(featured.tag);}} style={{ fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:featAcc,marginBottom:11,cursor:"pointer",display:"inline-block" }}>{featured.tag}</div>
                         <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:isMobile?21:27,fontWeight:600,lineHeight:1.2,marginBottom:13,color:C.ink,letterSpacing:"-0.02em" }}>{featured.title}</div>
                         <div style={{ fontSize:isMobile?13:14,lineHeight:1.75,color:C.inkMid }}>{featured.summary}</div>
                       </div>
@@ -411,8 +440,8 @@ export default function App() {
                 </section>
               )}
 
-              {activeCategory==="all"&&<StoryRail title="Most Loved Today" subtitle={`${mostLoved.reduce((s,x)=>s+x.loves,0).toLocaleString()} loves`} stories={mostLoved} lovedSet={lovedStories} onLove={id=>toggleLove(id)} onOpen={openStoryModal} C={C} dark={dark} justLovedId={justLovedId}/>}
-              {activeCategory==="all"&&nearYou.length>0&&<StoryRail title="Spreading Joy Near You" subtitle="Stories with a local heartbeat" stories={nearYou} lovedSet={lovedStories} onLove={id=>toggleLove(id)} onOpen={openStoryModal} C={C} dark={dark} justLovedId={justLovedId}/>}
+              {activeCategory==="all"&&<StoryRail title="Most Loved Today" subtitle={`${mostLoved.reduce((s,x)=>s+x.loves,0).toLocaleString()} loves`} stories={mostLoved} lovedSet={lovedStories} onLove={id=>toggleLove(id)} onOpen={openStoryModal} onTagClick={handleTagClick} C={C} dark={dark} justLovedId={justLovedId}/>}
+              {activeCategory==="all"&&nearYou.length>0&&<StoryRail title="Spreading Joy Near You" subtitle="Stories with a local heartbeat" stories={nearYou} lovedSet={lovedStories} onLove={id=>toggleLove(id)} onOpen={openStoryModal} onTagClick={handleTagClick} C={C} dark={dark} justLovedId={justLovedId}/>}
 
               {grid.length>0&&(
                 <section>
@@ -425,7 +454,7 @@ export default function App() {
                         onLove={e=>toggleLove(story.id,e)} onSave={e=>toggleSave(story.id,e)}
                         onShare={e=>{e?.stopPropagation();setShareStory(story);}}
                         onUnsee={e=>{e?.stopPropagation();unseeStory(story.id);}}
-                        onClick={()=>openStoryModal(story)} C={C} dark={dark} delay={i*0.04} justLovedId={justLovedId} isMobile={isMobile}/>
+                        onClick={()=>openStoryModal(story)} onTagClick={handleTagClick} C={C} dark={dark} delay={i*0.04} justLovedId={justLovedId} isMobile={isMobile}/>
                     ))}
                   </div>
                 </section>
@@ -516,6 +545,16 @@ export default function App() {
       {showAccount&&<AccountModal onClose={()=>setShowAccount(false)} C={C} dark={dark} prefs={prefs} streak={streak} lovedCount={lovedStories.size} savedCount={savedStories.size} onResetOnboarding={resetOnboarding}/>}
       {showHowWeFilter&&<HowWeFilterModal onClose={()=>setShowHowWeFilter(false)} C={C}/>}
       {showSwipe&&<SwipeMode stories={swipeStories} lovedSet={lovedStories} onLove={id=>toggleLove(id)} onPass={id=>unseeStory(id)} onOpen={openStoryModal} onClose={()=>setShowSwipe(false)} C={C} dark={dark} isMobile={isMobile}/>}
+
+      {/* ── MOOD SUGGESTION BANNER ──────────────────────────────── */}
+      {moodSuggestion&&!activeMood&&(
+        <div style={{ position:"fixed",bottom:isMobile?88:32,left:"50%",transform:"translateX(-50%)",background:C.surface,border:`1.5px solid ${C.amberMid}`,borderRadius:12,padding:"11px 14px",boxShadow:`0 4px 24px ${C.shadowMd}`,zIndex:490,display:"flex",alignItems:"center",gap:10,whiteSpace:"nowrap",animation:"bsToastIn 0.25s ease",maxWidth:"calc(100vw - 32px)" }}>
+          <div style={{ width:6,height:6,borderRadius:"50%",background:C.amber,flexShrink:0 }}/>
+          <span style={{ fontSize:13,color:C.inkMid,fontFamily:"'DM Sans',sans-serif" }}>Try <strong style={{ color:C.ink }}>{moodSuggestion}</strong> mood for more like this</span>
+          <button onClick={()=>{setActiveMood(moodSuggestion);setMoodSuggestion(null);if(suggTimerRef.current)clearTimeout(suggTimerRef.current);}} style={{ background:C.amber,color:"#fff",border:"none",borderRadius:6,padding:"5px 12px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",flexShrink:0 }}>Try it</button>
+          <button onClick={()=>{setMoodSuggestion(null);if(suggTimerRef.current)clearTimeout(suggTimerRef.current);}} aria-label="Dismiss" style={{ background:"none",border:"none",cursor:"pointer",color:C.inkLight,fontSize:18,lineHeight:1,padding:0,flexShrink:0 }}>×</button>
+        </div>
+      )}
 
       {/* ── TOAST ──────────────────────────────────────────────── */}
       {toast&&(

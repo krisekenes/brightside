@@ -2,7 +2,7 @@ import { cAcc, cBg } from "../lib/theme";
 import { Ic } from "../icons";
 
 // ─── STORY CARD ───────────────────────────────────────────────────────────────
-export default function StoryCard({ story, loved, saved, onLove, onSave, onShare, onUnsee, onClick, C, dark, delay=0, justLovedId, isMobile }) {
+export default function StoryCard({ story, loved, saved, onLove, onSave, onShare, onUnsee, onClick, onTagClick, C, dark, delay=0, justLovedId, isMobile }) {
   const acc=cAcc(story.category,dark), bg=cBg(story.category,dark);
   const btnSz = isMobile ? 44 : 30;
   const summaryLen = isMobile ? 130 : 105;
@@ -10,7 +10,7 @@ export default function StoryCard({ story, loved, saved, onLove, onSave, onShare
     <article onClick={onClick} className="bs-card" style={{ background:bg,borderRadius:12,overflow:"hidden",border:`1px solid ${C.border}`,cursor:"pointer",animationDelay:`${delay}s`,display:"flex",flexDirection:"column" }}>
       <div style={{ height:3,background:`linear-gradient(90deg,${acc},${acc}88)` }}/>
       <div style={{ padding:isMobile?"18px 18px 0":"17px 17px 0",flex:1 }}>
-        <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:acc,marginBottom:7 }}>{story.tag}</div>
+        <div onClick={e=>{e.stopPropagation();onTagClick?.(story.tag);}} style={{ fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:acc,marginBottom:7,cursor:"pointer",display:"inline-block" }}>{story.tag}</div>
         <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:isMobile?17:15,fontWeight:500,lineHeight:1.35,color:C.ink,marginBottom:8,letterSpacing:"-0.01em" }}>{story.title}</div>
         <div style={{ fontSize:13,lineHeight:1.7,color:C.inkMid }}>{story.summary.substring(0,summaryLen)}{story.summary.length>summaryLen?"…":""}</div>
       </div>

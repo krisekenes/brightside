@@ -1,7 +1,7 @@
 import { cAcc, cBg } from "../lib/theme";
 import { Ic } from "../icons";
 
-export default function StoryRail({ title, subtitle, stories, lovedSet, onLove, onOpen, C, dark, justLovedId }) {
+export default function StoryRail({ title, subtitle, stories, lovedSet, onLove, onOpen, onTagClick, C, dark, justLovedId }) {
   return (
     <section style={{ marginBottom:40 }}>
       <div style={{ display:"flex",alignItems:"baseline",gap:10,marginBottom:14 }}>
@@ -15,7 +15,7 @@ export default function StoryRail({ title, subtitle, stories, lovedSet, onLove, 
             <div key={s.id} onClick={()=>onOpen(s)} className="bs-card bs-rail-card" style={{ background:bg,border:`1px solid ${C.border}`,borderRadius:12,overflow:"hidden",cursor:"pointer",flexShrink:0 }}>
               <div style={{ height:3,background:`linear-gradient(90deg,${acc},${acc}88)` }}/>
               <div style={{ padding:"15px 15px 13px" }}>
-                <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:acc,marginBottom:6 }}>{s.tag}</div>
+                <div onClick={e=>{e.stopPropagation();onTagClick?.(s.tag);}} style={{ fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:acc,marginBottom:6,cursor:"pointer",display:"inline-block" }}>{s.tag}</div>
                 <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:13,fontWeight:500,lineHeight:1.35,color:C.ink,marginBottom:9 }}>{s.title}</div>
                 <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between" }}>
                   <span style={{ fontSize:11,color:C.inkLight }}>{s.source}</span>
