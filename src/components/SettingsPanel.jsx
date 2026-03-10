@@ -29,10 +29,10 @@ export default function SettingsPanel({ C, dark, prefs, onUpdate, onClose, onRes
         {/* Header */}
         <div style={{ padding:"20px 24px 16px",borderBottom:`1px solid ${C.border}`,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,background:C.surface,zIndex:1 }}>
           <div>
-            <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:20,color:C.ink }}>Your preferences</div>
+            <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:20,color:C.ink }}>Your preferences</div>
             <div style={{ fontSize:12,color:C.inkLight,marginTop:2 }}>Personalise your BrightSide feed</div>
           </div>
-          <button onClick={onClose} style={{ background:C.surfaceAlt,border:`1px solid ${C.border}`,borderRadius:8,width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:C.inkMid }}>×</button>
+          <button aria-label="Close" onClick={onClose} style={{ background:C.surfaceAlt,border:`1px solid ${C.border}`,borderRadius:8,width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:C.inkMid }}>×</button>
         </div>
 
         <div style={{ padding:"20px 24px",flex:1 }}>
@@ -67,7 +67,7 @@ export default function SettingsPanel({ C, dark, prefs, onUpdate, onClose, onRes
               {[null, ...Object.keys(MOOD_CONFIG)].map(m=>{
                 const on = localMood===m;
                 return (
-                  <button key={m||"none"} onClick={()=>setLocalMood(on&&m?null:m)}
+                  <button key={m||"none"} onClick={()=>setLocalMood(on?null:m)}
                     style={{ background:on?(m?C.amberPale:C.surfaceAlt):C.surfaceAlt,border:`1.5px solid ${on?(m?C.amber:C.inkLight):C.border}`,borderRadius:10,padding:"11px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:11,transition:"all 0.15s" }}>
                     <div style={{ width:22,height:22,borderRadius:"50%",background:on?(m?C.amber:C.inkLight):C.surface,border:`1px solid ${on?(m?C.amber:C.inkFaint):C.border}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.15s" }}>
                       {on&&<Ic.Check c="#fff" s={9}/>}

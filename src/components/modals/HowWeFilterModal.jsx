@@ -5,7 +5,7 @@ export default function HowWeFilterModal({ onClose, C }) {
     <Modal onClose={onClose} C={C} maxWidth={480}>
       <div style={{ background:C.amberPale,padding:"26px 26px 20px",borderBottom:`1px solid ${C.border}` }}>
         <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:C.amber,marginBottom:7 }}>Transparency</div>
-        <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:21,color:C.ink,lineHeight:1.3,marginBottom:6 }}>How we filter the news</div>
+        <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:21,color:C.ink,lineHeight:1.3,marginBottom:6 }}>How we filter the news</div>
         <div style={{ fontSize:13,color:C.inkMid,lineHeight:1.6 }}>Every story on BrightSide passes through the same transparent system.</div>
       </div>
 

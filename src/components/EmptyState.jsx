@@ -47,7 +47,7 @@ export default function EmptyState({ reason, C, onClearSearch, onExpandRadius, o
           }
         </svg>
       </div>
-      <div style={{ fontFamily:"'DM Serif Display',serif", fontSize:22, color:C.inkMid, marginBottom:8 }}>{headline}</div>
+      <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif", fontSize:22, color:C.inkMid, marginBottom:8 }}>{headline}</div>
       <div style={{ fontSize:14, color:C.inkLight, lineHeight:1.7, maxWidth:300, margin:"0 auto 28px" }}>{body}</div>
       <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10 }}>
         <button onClick={action} style={{ background:C.amber, color:"#fff", border:"none", borderRadius:8, padding:"11px 28px", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", transition:"all 0.15s" }}>

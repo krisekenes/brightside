@@ -10,7 +10,7 @@ export default function ShareModal({ story, onClose, C, dark }) {
     <Modal onClose={onClose} C={C}>
       <div style={{ background:bg,padding:"28px 26px 22px",borderBottom:`1px solid ${C.border}` }}>
         <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:acc,marginBottom:8 }}>{story.tag}</div>
-        <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:17,lineHeight:1.35,color:C.ink,marginBottom:12 }}>{story.title}</div>
+        <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:17,lineHeight:1.35,color:C.ink,marginBottom:12 }}>{story.title}</div>
         <div style={{ fontSize:11,fontWeight:600,letterSpacing:"0.05em",color:C.inkLight }}>via BrightSide · Today's Good News</div>
       </div>
       <div style={{ padding:"18px 22px 22px" }}>

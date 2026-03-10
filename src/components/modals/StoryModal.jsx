@@ -9,7 +9,7 @@ export default function StoryModal({ story, onClose, onUnsee, C, dark }) {
         <div style={{ background:bg,padding:"32px 30px 24px",position:"relative" }}>
           <button onClick={onClose} style={{ position:"absolute",top:12,right:12,background:"rgba(128,128,128,0.12)",border:"none",borderRadius:6,width:28,height:28,cursor:"pointer",fontSize:16,color:C.inkMid,display:"flex",alignItems:"center",justifyContent:"center" }}>×</button>
           <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:acc,marginBottom:10 }}>{story.tag}</div>
-          <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:24,fontWeight:400,lineHeight:1.25,color:C.ink }}>{story.title}</div>
+          <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:24,fontWeight:600,lineHeight:1.2,color:C.ink,letterSpacing:"-0.02em" }}>{story.title}</div>
         </div>
         <div style={{ padding:"22px 30px 30px" }}>
           <div style={{ fontSize:14,lineHeight:1.8,color:C.inkMid,marginBottom:16,fontStyle:"italic",borderLeft:`3px solid ${acc}`,paddingLeft:14 }}>{story.summary}</div>

@@ -34,7 +34,7 @@ export default function Onboarding({ C, dark, onComplete }) {
 
       {/* ── Sticky header: wordmark + progress ── */}
       <div style={{ flexShrink:0,padding:isMobile?"16px 20px 14px":"20px 20px 16px",textAlign:"center",borderBottom:`1px solid ${C.borderLight}`,background:C.bg }}>
-        <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:isMobile?20:22,color:C.ink }}>
+        <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:isMobile?20:22,color:C.ink }}>
           Bright<span style={{color:C.amber}}>Side</span>
         </div>
         <div style={{ fontSize:10,fontWeight:600,letterSpacing:"0.08em",color:C.inkLight,marginTop:2 }}>Today's Good News</div>
@@ -61,7 +61,7 @@ export default function Onboarding({ C, dark, onComplete }) {
           {step === 1 && (
             <>
               <div style={{ textAlign:"center",marginBottom:isMobile?20:28 }}>
-                <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:isMobile?24:28,fontWeight:400,color:C.ink,lineHeight:1.2,marginBottom:8 }}>
+                <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:isMobile?24:28,fontWeight:600,color:C.ink,lineHeight:1.2,letterSpacing:"-0.02em",marginBottom:8 }}>
                   What do you want<br/>more of?
                 </div>
                 <div style={{ fontSize:13,color:C.inkMid,lineHeight:1.6 }}>
@@ -85,7 +85,7 @@ export default function Onboarding({ C, dark, onComplete }) {
                       <div style={{ width:isMobile?22:28,height:isMobile?22:28,borderRadius:6,background:selected?`${acc}22`:C.surfaceAlt,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:isMobile?7:10,transition:"all 0.18s" }}>
                         <div style={{ width:8,height:8,borderRadius:"50%",background:selected?acc:C.inkLight,transition:"all 0.18s" }}/>
                       </div>
-                      <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:isMobile?14:16,color:selected?C.ink:C.inkMid,marginBottom:2,transition:"color 0.18s" }}>{cat.label}</div>
+                      <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:isMobile?14:16,color:selected?C.ink:C.inkMid,marginBottom:2,transition:"color 0.18s" }}>{cat.label}</div>
                       <div style={{ fontSize:isMobile?10:11,color:selected?C.inkMid:C.inkLight,lineHeight:1.4,transition:"color 0.18s" }}>{cat.desc}</div>
                     </button>
                   );
@@ -106,7 +106,7 @@ export default function Onboarding({ C, dark, onComplete }) {
           {step === 2 && (
             <>
               <div style={{ textAlign:"center",marginBottom:isMobile?20:28 }}>
-                <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:isMobile?24:28,fontWeight:400,color:C.ink,lineHeight:1.2,marginBottom:8 }}>
+                <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:isMobile?24:28,fontWeight:600,color:C.ink,lineHeight:1.2,letterSpacing:"-0.02em",marginBottom:8 }}>
                   How do you want<br/>to feel reading this?
                 </div>
                 <div style={{ fontSize:13,color:C.inkMid,lineHeight:1.6 }}>
@@ -124,7 +124,7 @@ export default function Onboarding({ C, dark, onComplete }) {
                         {selected ? <Ic.Check c="#fff" s={12}/> : <div style={{ width:8,height:8,borderRadius:"50%",background:C.inkLight }}/>}
                       </div>
                       <div>
-                        <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:isMobile?15:17,color:selected?C.amber:C.ink,marginBottom:2,transition:"color 0.18s" }}>{name}</div>
+                        <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:isMobile?15:17,color:selected?C.amber:C.ink,marginBottom:2,transition:"color 0.18s" }}>{name}</div>
                         <div style={{ fontSize:isMobile?11:12,color:C.inkMid,lineHeight:1.4 }}>{cfg.description}</div>
                       </div>
                     </button>
@@ -146,7 +146,7 @@ export default function Onboarding({ C, dark, onComplete }) {
               <div style={{ width:isMobile?72:88,height:isMobile?72:88,borderRadius:"50%",background:`linear-gradient(135deg,${C.amber},${C.amberLight})`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 24px",boxShadow:`0 0 0 14px ${C.amberPale},0 0 0 28px ${C.amberGlow}`,animation:"bsReadyPop 0.5s ease" }}>
                 <Ic.Sparkle c="#fff" s={isMobile?28:36}/>
               </div>
-              <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:isMobile?26:30,fontWeight:400,color:C.ink,lineHeight:1.2,marginBottom:10 }}>
+              <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:isMobile?26:30,fontWeight:600,color:C.ink,lineHeight:1.2,letterSpacing:"-0.02em",marginBottom:10 }}>
                 Your BrightSide<br/>is ready
               </div>
               <div style={{ fontSize:13,color:C.inkMid,lineHeight:1.7,marginBottom:24 }}>

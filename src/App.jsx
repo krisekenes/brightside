@@ -74,7 +74,7 @@ export default function App() {
   const [lovedStories,  setLovedStories]    = useState(new Set());
   const [savedStories,  setSavedStories]    = useState(new Set());
   const [unseenStories, setUnseenStories]   = useState(new Set());
-  const [activeMood,    setActiveMood]      = useState(()=>LS.get("bs-prefs",{mood:null}).mood);
+  const [activeMood,    setActiveMood]      = useState(prefs.mood);
   const [radiusKm,      setRadiusKm]        = useState(50);
   const [shareStory,    setShareStory]      = useState(null);
   const [openStory,     setOpenStory]       = useState(null);
@@ -177,7 +177,7 @@ export default function App() {
   if (!hasOnboarded) {
     return (
       <>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} @keyframes bsReadyPop{0%{transform:scale(0.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}`}</style>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap'); *,*::before,*::after{box-sizing:border-box;margin:0;padding:0} @keyframes bsReadyPop{0%{transform:scale(0.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}`}</style>
         <Onboarding C={C} dark={dark} onComplete={completeOnboarding}/>
       </>
     );
@@ -186,7 +186,7 @@ export default function App() {
   return (
     <div style={{ fontFamily:"'DM Sans',sans-serif",background:C.bg,minHeight:"100vh",color:C.ink,transition:"background 0.25s,color 0.25s" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         ::selection{background:${C.amberPale};color:${C.amber}}
         ::-webkit-scrollbar{width:0;height:0}
@@ -243,10 +243,10 @@ export default function App() {
                 </div>
               )}
               {!isMobile&&<button className="bs-btn" onClick={()=>setShowDigest(true)}>Daily Digest</button>}
-              <button className="bs-btn" onClick={()=>setShowSearch(v=>!v)} style={{ width:isMobile?40:36,height:isMobile?40:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center",background:showSearch?C.amberPale:C.surfaceAlt,borderColor:showSearch?C.amberMid:C.border }}><Ic.Search c={showSearch?C.amber:C.inkMid}/></button>
-              {!isMobile&&<button className="bs-btn" onClick={()=>setShowAccount(true)} style={{ width:36,height:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }} title="Your account"><Ic.Person c={C.inkMid}/></button>}
-              <button className="bs-btn" onClick={()=>setShowSettings(true)} style={{ width:isMobile?40:36,height:isMobile?40:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }} title="Preferences"><Ic.Settings c={C.inkMid}/></button>
-              <button className="bs-btn" onClick={()=>setDark(v=>!v)} style={{ width:isMobile?40:36,height:isMobile?40:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }}>
+              <button aria-label="Search" className="bs-btn" onClick={()=>setShowSearch(v=>!v)} style={{ width:isMobile?40:36,height:isMobile?40:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center",background:showSearch?C.amberPale:C.surfaceAlt,borderColor:showSearch?C.amberMid:C.border }}><Ic.Search c={showSearch?C.amber:C.inkMid}/></button>
+              <button aria-label="Your account" className="bs-btn" onClick={()=>setShowAccount(true)} style={{ width:isMobile?40:36,height:isMobile?40:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }}><Ic.Person c={C.inkMid}/></button>
+              <button aria-label="Preferences" className="bs-btn" onClick={()=>setShowSettings(true)} style={{ width:isMobile?40:36,height:isMobile?40:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }}><Ic.Settings c={C.inkMid}/></button>
+              <button aria-label={dark?"Switch to light mode":"Switch to dark mode"} className="bs-btn" onClick={()=>setDark(v=>!v)} style={{ width:isMobile?40:36,height:isMobile?40:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }}>
                 {dark?<Ic.Sun c={C.amber}/>:<Ic.Moon c={C.inkMid}/>}
               </button>
             </div>
@@ -316,8 +316,8 @@ export default function App() {
         {isMobile&&mobileTab==="saved"&&(
           <section>
             <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:C.inkLight,marginBottom:16 }}>Saved · {savedList.length}</div>
-            {savedList.length===0?<div style={{ textAlign:"center",padding:"60px 0",color:C.inkLight }}><div style={{ fontFamily:"'DM Serif Display',serif",fontSize:20,color:C.inkMid,marginBottom:8 }}>Nothing saved yet</div><div style={{ fontSize:13 }}>Tap the bookmark on any story to save it here.</div></div>
-              :savedList.map(s=>{const acc=cAcc(s.category,dark);return(<div key={s.id} onClick={()=>openStoryModal(s)} className="bs-card" style={{ display:"flex",alignItems:"center",gap:13,padding:"12px 15px",background:C.surfaceAlt,borderRadius:10,marginBottom:8,cursor:"pointer",border:`1px solid ${C.border}` }}><div style={{ width:4,alignSelf:"stretch",borderRadius:2,background:acc,flexShrink:0 }}/><div style={{ flex:1,minWidth:0 }}><div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",color:acc,marginBottom:2 }}>{s.tag}</div><div style={{ fontFamily:"'DM Serif Display',serif",fontSize:13,color:C.ink,lineHeight:1.35,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{s.title}</div></div><button onClick={e=>{e.stopPropagation();toggleSave(s.id,e);}} style={{ background:"none",border:"none",cursor:"pointer",color:C.amber,fontSize:18,flexShrink:0 }}>×</button></div>);})}
+            {savedList.length===0?<div style={{ textAlign:"center",padding:"60px 0",color:C.inkLight }}><div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:20,color:C.inkMid,marginBottom:8 }}>Nothing saved yet</div><div style={{ fontSize:13 }}>Tap the bookmark on any story to save it here.</div></div>
+              :savedList.map(s=>{const acc=cAcc(s.category,dark);return(<div key={s.id} onClick={()=>openStoryModal(s)} className="bs-card" style={{ display:"flex",alignItems:"center",gap:13,padding:"12px 15px",background:C.surfaceAlt,borderRadius:10,marginBottom:8,cursor:"pointer",border:`1px solid ${C.border}` }}><div style={{ width:4,alignSelf:"stretch",borderRadius:2,background:acc,flexShrink:0 }}/><div style={{ flex:1,minWidth:0 }}><div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",color:acc,marginBottom:2 }}>{s.tag}</div><div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:13,color:C.ink,lineHeight:1.35,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{s.title}</div></div><button onClick={e=>{e.stopPropagation();toggleSave(s.id,e);}} style={{ background:"none",border:"none",cursor:"pointer",color:C.amber,fontSize:18,flexShrink:0 }}>×</button></div>);})}
           </section>
         )}
 
@@ -331,7 +331,7 @@ export default function App() {
                 return(<button key={cat.id} onClick={()=>{setActiveCategory(cat.id);setMobileTab("home");}} style={{ background:bg,border:`1.5px solid ${on?acc:C.border}`,borderRadius:12,padding:"16px 14px",cursor:"pointer",textAlign:"left",display:"flex",flexDirection:"column",gap:7,position:"relative" }}>
                   {!on&&<div style={{ position:"absolute",top:8,right:8,fontSize:9,fontWeight:700,color:C.inkLight,background:C.surfaceAlt,borderRadius:4,padding:"2px 6px" }}>hidden</div>}
                   <div style={{ width:28,height:28,borderRadius:8,background:`${acc}22`,display:"flex",alignItems:"center",justifyContent:"center" }}><div style={{ width:10,height:10,borderRadius:"50%",background:acc }}/></div>
-                  <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:15,color:C.ink }}>{cat.label}</div>
+                  <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:15,color:C.ink }}>{cat.label}</div>
                   <div style={{ fontSize:11,color:C.inkLight }}>{STORIES.filter(s=>s.category===cat.id).length} stories</div>
                 </button>);
               })}
@@ -362,13 +362,13 @@ export default function App() {
                     <div style={{ padding:isMobile?"18px 18px 14px":"30px 34px",display:"flex",flexDirection:"column",justifyContent:"space-between" }}>
                       <div>
                         <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:featAcc,marginBottom:11 }}>{featured.tag}</div>
-                        <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:isMobile?21:27,fontWeight:400,lineHeight:1.2,marginBottom:13,color:C.ink }}>{featured.title}</div>
+                        <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:isMobile?21:27,fontWeight:600,lineHeight:1.2,marginBottom:13,color:C.ink,letterSpacing:"-0.02em" }}>{featured.title}</div>
                         <div style={{ fontSize:isMobile?13:14,lineHeight:1.75,color:C.inkMid }}>{featured.summary}</div>
                       </div>
                       <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:18,paddingTop:14,borderTop:`1px solid ${C.borderLight}`,gap:8 }}>
                         <div style={{ fontSize:11,color:C.inkLight,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{featured.source} · {featured.time}</div>
                         <div style={{ display:"flex",gap:7,alignItems:"center",flexShrink:0 }} onClick={e=>e.stopPropagation()}>
-                          <button onClick={e=>toggleLove(featured.id,e)} style={{ display:"flex",alignItems:"center",gap:5,padding:isMobile?"8px 12px":"6px 12px",borderRadius:20,background:lovedStories.has(featured.id)?C.amberPale:C.surface,border:`1px solid ${lovedStories.has(featured.id)?C.amber:C.border}`,cursor:"pointer",transition:"all 0.15s" }}>
+                          <button aria-label={lovedStories.has(featured.id)?"Unlike story":"Love story"} onClick={e=>toggleLove(featured.id,e)} style={{ display:"flex",alignItems:"center",gap:5,padding:isMobile?"8px 12px":"6px 12px",borderRadius:20,background:lovedStories.has(featured.id)?C.amberPale:C.surface,border:`1px solid ${lovedStories.has(featured.id)?C.amber:C.border}`,cursor:"pointer",transition:"all 0.15s" }}>
                             <span style={{ display:"inline-flex",animation:justLovedId===featured.id?"bsHeartPop 0.35s ease":undefined }}><Ic.Heart c={lovedStories.has(featured.id)?C.amber:C.inkLight} f={lovedStories.has(featured.id)} s={13}/></span>
                             <span style={{ fontSize:12,fontWeight:600,color:lovedStories.has(featured.id)?C.amber:C.inkMid }}>{(featured.loves+(lovedStories.has(featured.id)?1:0)).toLocaleString()}</span>
                           </button>
@@ -379,10 +379,10 @@ export default function App() {
                     </div>
                     {!isMobile&&(
                       <div style={{ background:`linear-gradient(160deg,${featAcc}20,${featAcc}06)`,display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"flex-end",padding:"26px 26px 30px",position:"relative",overflow:"hidden",borderLeft:`1px solid ${C.borderLight}` }}>
-                        <div style={{ position:"absolute",top:-16,right:-8,fontFamily:"'DM Serif Display',serif",fontSize:100,fontWeight:400,color:`${featAcc}14`,lineHeight:1,userSelect:"none",letterSpacing:"-3px" }}>{featured.tag}</div>
+                        <div style={{ position:"absolute",top:-16,right:-8,fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:100,fontWeight:400,color:`${featAcc}14`,lineHeight:1,userSelect:"none",letterSpacing:"-3px" }}>{featured.tag}</div>
                         <div style={{ position:"relative",zIndex:1 }}>
                           <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:featAcc,marginBottom:5,opacity:0.7 }}>BrightSide</div>
-                          <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:13,fontStyle:"italic",color:C.inkMid,lineHeight:1.6,maxWidth:180 }}>"{featured.summary.split(".")[0]}."</div>
+                          <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:13,fontStyle:"italic",color:C.inkMid,lineHeight:1.6,maxWidth:180 }}>"{featured.summary.split(".")[0]}."</div>
                         </div>
                       </div>
                     )}
@@ -416,10 +416,10 @@ export default function App() {
               {!isMobile&&savedList.length>0&&(
                 <section style={{ marginTop:48,paddingTop:32,borderTop:`1px solid ${C.border}` }}>
                   <div style={{ display:"flex",alignItems:"baseline",gap:10,marginBottom:16 }}>
-                    <h2 style={{ fontFamily:"'DM Serif Display',serif",fontSize:18,fontWeight:400,color:C.ink }}>Saved</h2>
+                    <h2 style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:18,fontWeight:400,color:C.ink }}>Saved</h2>
                     <span style={{ fontSize:13,color:C.inkLight }}>{savedList.length}</span>
                   </div>
-                  {savedList.map(s=>{const acc=cAcc(s.category,dark);return(<div key={s.id} onClick={()=>openStoryModal(s)} className="bs-card" style={{ display:"flex",alignItems:"center",gap:13,padding:"12px 16px",background:C.surfaceAlt,borderRadius:9,marginBottom:7,cursor:"pointer",border:`1px solid ${C.border}` }}><div style={{ width:4,alignSelf:"stretch",borderRadius:2,background:acc,flexShrink:0 }}/><div style={{ flex:1 }}><div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",color:acc,marginBottom:2 }}>{s.tag}</div><div style={{ fontFamily:"'DM Serif Display',serif",fontSize:13,color:C.ink,lineHeight:1.35 }}>{s.title}</div></div><div style={{ fontSize:11,color:C.inkLight,flexShrink:0 }}>{s.source}</div><button onClick={e=>{e.stopPropagation();toggleSave(s.id,e);}} style={{ background:"none",border:"none",cursor:"pointer",color:C.amber,fontSize:18,lineHeight:1 }}>×</button></div>);})}
+                  {savedList.map(s=>{const acc=cAcc(s.category,dark);return(<div key={s.id} onClick={()=>openStoryModal(s)} className="bs-card" style={{ display:"flex",alignItems:"center",gap:13,padding:"12px 16px",background:C.surfaceAlt,borderRadius:9,marginBottom:7,cursor:"pointer",border:`1px solid ${C.border}` }}><div style={{ width:4,alignSelf:"stretch",borderRadius:2,background:acc,flexShrink:0 }}/><div style={{ flex:1 }}><div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase",color:acc,marginBottom:2 }}>{s.tag}</div><div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:13,color:C.ink,lineHeight:1.35 }}>{s.title}</div></div><div style={{ fontSize:11,color:C.inkLight,flexShrink:0 }}>{s.source}</div><button onClick={e=>{e.stopPropagation();toggleSave(s.id,e);}} style={{ background:"none",border:"none",cursor:"pointer",color:C.amber,fontSize:18,lineHeight:1 }}>×</button></div>);})}
                 </section>
               )}
             </>}
@@ -431,12 +431,12 @@ export default function App() {
       {!isMobile&&(
         <>
           <div onClick={()=>setShowStreak(v=>!v)} style={{ position:"fixed",bottom:24,right:24,background:C.surface,border:`1.5px solid ${C.border}`,borderRadius:12,padding:"10px 16px",boxShadow:`0 4px 20px ${C.shadow}`,display:"flex",alignItems:"center",gap:11,cursor:"pointer",transition:"all 0.2s",zIndex:90 }}>
-            <div style={{ width:32,height:32,borderRadius:"50%",background:`linear-gradient(135deg,${C.amber},${C.amberLight})`,display:"flex",alignItems:"center",justifyContent:"center" }}><span style={{ fontFamily:"'DM Serif Display',serif",fontSize:13,color:"#fff" }}>{streak}</span></div>
+            <div style={{ width:32,height:32,borderRadius:"50%",background:`linear-gradient(135deg,${C.amber},${C.amberLight})`,display:"flex",alignItems:"center",justifyContent:"center" }}><span style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:13,color:"#fff" }}>{streak}</span></div>
             <div><div style={{ fontSize:12,fontWeight:700,color:C.ink }}>{streak}-day streak</div><div style={{ fontSize:11,color:C.inkLight }}>Keep scrolling bright</div></div>
           </div>
           {showStreak&&(
             <div style={{ position:"fixed",bottom:80,right:24,background:C.surface,border:`1.5px solid ${C.border}`,borderRadius:12,padding:18,boxShadow:`0 8px 32px ${C.shadowMd}`,zIndex:200,width:216 }}>
-              <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:15,color:C.ink,marginBottom:13 }}>This week</div>
+              <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:15,color:C.ink,marginBottom:13 }}>This week</div>
               <div style={{ display:"flex",justifyContent:"space-between",marginBottom:11 }}>
                 {(()=>{
                   const today=new Date(), dow=today.getDay();
@@ -466,9 +466,9 @@ export default function App() {
       {/* ── MOBILE BOTTOM NAV ─────────────────────────────────────── */}
       {isMobile&&(
         <nav className="bs-bottom-nav">
-          {[{id:"home",l:"Home",I:({c})=><Ic.Home c={c}/>},{id:"explore",l:"Explore",I:({c})=><Ic.Compass c={c}/>},{id:"saved",l:"Saved",I:({c})=><Ic.Saved c={c}/>},{id:"account",l:"Account",I:({c})=><Ic.Person c={c}/>}].map(item=>{
-            const active=item.id!=="account"&&mobileTab===item.id;
-            return(<button key={item.id} className="bs-nav-btn" onClick={()=>item.id==="account"?setShowAccount(true):setMobileTab(item.id)}>
+          {[{id:"home",l:"Home",I:({c})=><Ic.Home c={c}/>},{id:"explore",l:"Explore",I:({c})=><Ic.Compass c={c}/>},{id:"saved",l:"Saved",I:({c})=><Ic.Saved c={c}/>},{id:"digest",l:"Digest",I:({c})=><Ic.Sun c={c}/>}].map(item=>{
+            const active=item.id!=="digest"&&mobileTab===item.id;
+            return(<button key={item.id} className="bs-nav-btn" aria-label={item.l} onClick={()=>item.id==="digest"?setShowDigest(true):setMobileTab(item.id)}>
               <item.I c={active?C.amber:C.inkLight}/>
               <span className="bs-nav-label" style={{ color:active?C.amber:C.inkLight }}>{item.l}</span>
             </button>);

@@ -5,7 +5,7 @@ export default function StoryRail({ title, subtitle, stories, lovedSet, onLove, 
   return (
     <section style={{ marginBottom:40 }}>
       <div style={{ display:"flex",alignItems:"baseline",gap:10,marginBottom:14 }}>
-        <h2 style={{ fontFamily:"'DM Serif Display',serif",fontSize:19,fontWeight:400,color:C.ink,margin:0 }}>{title}</h2>
+        <h2 style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:19,fontWeight:600,color:C.ink,margin:0,letterSpacing:"-0.01em" }}>{title}</h2>
         {subtitle&&<span style={{ fontSize:12,color:C.inkLight }}>{subtitle}</span>}
       </div>
       <div className="bs-rail">
@@ -16,7 +16,7 @@ export default function StoryRail({ title, subtitle, stories, lovedSet, onLove, 
               <div style={{ height:3,background:`linear-gradient(90deg,${acc},${acc}88)` }}/>
               <div style={{ padding:"15px 15px 13px" }}>
                 <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:acc,marginBottom:6 }}>{s.tag}</div>
-                <div style={{ fontFamily:"'DM Serif Display',serif",fontSize:13,fontWeight:400,lineHeight:1.4,color:C.ink,marginBottom:9 }}>{s.title}</div>
+                <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:13,fontWeight:500,lineHeight:1.35,color:C.ink,marginBottom:9 }}>{s.title}</div>
                 <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between" }}>
                   <span style={{ fontSize:11,color:C.inkLight }}>{s.source}</span>
                   <button onClick={e=>{e.stopPropagation();onLove(s.id);}} style={{ display:"flex",alignItems:"center",gap:4,background:lovedSet.has(s.id)?C.amberPale:C.surface,border:`1px solid ${lovedSet.has(s.id)?C.amber:C.border}`,borderRadius:20,padding:"3px 8px",cursor:"pointer",transition:"all 0.15s" }}>

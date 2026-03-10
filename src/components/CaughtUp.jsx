@@ -38,7 +38,7 @@ export default function CaughtUp({ C, streak, onDigest, lovedToday=0, readToday=
         <div style={{ fontSize:10, fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase", color:C.amber, marginBottom:12 }}>
           You're caught up
         </div>
-        <div style={{ fontFamily:"'DM Serif Display',serif", fontSize:24, fontWeight:400, color:C.ink, lineHeight:1.25, marginBottom:10 }}>
+        <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif", fontSize:24, fontWeight:600, color:C.ink, lineHeight:1.2, marginBottom:10, letterSpacing:"-0.02em" }}>
           That's all of today's<br/>good news
         </div>
         <div style={{ fontSize:13, color:C.inkMid, lineHeight:1.7, marginBottom:8 }}>
@@ -46,7 +46,7 @@ export default function CaughtUp({ C, streak, onDigest, lovedToday=0, readToday=
         </div>
         {streak > 0 && (
           <div style={{ display:"inline-flex", alignItems:"center", gap:7, background:C.amberPale, border:`1px solid ${C.amberMid}`, borderRadius:20, padding:"5px 14px", fontSize:12, fontWeight:600, color:C.amber, marginBottom:12 }}>
-            <span style={{ fontFamily:"'DM Serif Display',serif", fontSize:14 }}>{streak}</span>
+            <span style={{ fontFamily:"'Bricolage Grotesque',sans-serif", fontSize:14 }}>{streak}</span>
             <span>day streak — keep it up</span>
           </div>
         )}
@@ -55,19 +55,19 @@ export default function CaughtUp({ C, streak, onDigest, lovedToday=0, readToday=
           <div style={{ display:"flex", gap:16, justifyContent:"center", marginBottom:28 }}>
             {readToday > 0 && (
               <div style={{ fontSize:12, color:C.inkMid }}>
-                <strong style={{ fontFamily:"'DM Serif Display',serif", fontSize:15, color:C.ink }}>{readToday}</strong> {readToday===1?"story":"stories"} read
+                <strong style={{ fontFamily:"'Bricolage Grotesque',sans-serif", fontSize:15, color:C.ink }}>{readToday}</strong> {readToday===1?"story":"stories"} read
               </div>
             )}
             {lovedToday > 0 && (
               <div style={{ fontSize:12, color:C.inkMid }}>
-                <strong style={{ fontFamily:"'DM Serif Display',serif", fontSize:15, color:C.amber }}>{lovedToday}</strong> loved
+                <strong style={{ fontFamily:"'Bricolage Grotesque',sans-serif", fontSize:15, color:C.amber }}>{lovedToday}</strong> loved
               </div>
             )}
           </div>
         )}
 
         <div style={{ background:C.surfaceAlt, border:`1px solid ${C.border}`, borderRadius:14, padding:"22px 24px", marginTop:(streak>0||readToday>0||lovedToday>0)?0:28 }}>
-          <div style={{ fontFamily:"'DM Serif Display',serif", fontSize:16, color:C.ink, marginBottom:6 }}>
+          <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif", fontSize:16, color:C.ink, marginBottom:6 }}>
             Wake up to good news tomorrow
           </div>
           <div style={{ fontSize:13, color:C.inkMid, lineHeight:1.6, marginBottom:16 }}>
