@@ -69,9 +69,9 @@ export default function App() {
 
   // ── Feed state ──
   const [activeCategory, setActiveCategory] = useState("all");
-  const [lovedStories,  setLovedStories]    = useState(new Set());
-  const [savedStories,  setSavedStories]    = useState(new Set());
-  const [unseenStories, setUnseenStories]   = useState(new Set());
+  const [lovedStories,  setLovedStories]    = useState(()=>new Set(LS.get("bs-loved",[])));
+  const [savedStories,  setSavedStories]    = useState(()=>new Set(LS.get("bs-saved",[])));
+  const [unseenStories, setUnseenStories]   = useState(()=>new Set(LS.get("bs-unseen",[])));
   const [activeMood,    setActiveMood]      = useState(prefs.mood);
   const [radiusKm,      setRadiusKm]        = useState(50);
   const [shareStory,    setShareStory]      = useState(null);
@@ -146,11 +146,12 @@ export default function App() {
       } else {
         n.delete(id);
       }
+      LS.set("bs-loved", [...n]);
       return n;
     });
   },[showToast]);
-  const toggleSave = useCallback((id,e)=>{e?.stopPropagation();setSavedStories(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);return n;});},[]);
-  const unseeStory = useCallback((id)=>{setUnseenStories(p=>new Set([...p,id]));},[]);
+  const toggleSave = useCallback((id,e)=>{e?.stopPropagation();setSavedStories(p=>{const n=new Set(p);n.has(id)?n.delete(id):n.add(id);LS.set("bs-saved",[...n]);return n;});},[]);
+  const unseeStory = useCallback((id)=>{setUnseenStories(p=>{const n=new Set([...p,id]);LS.set("bs-unseen",[...n]);return n;});},[]);
   const openStoryModal = useCallback((story)=>{setOpenStory(story);setReadCount(c=>c+1);},[]);
 
   const handleTagClick = useCallback((tag) => {
