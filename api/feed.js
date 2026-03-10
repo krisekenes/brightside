@@ -76,7 +76,8 @@ const BLOCKLIST_RE = /\b(killed|killing|murder|murdered|deaths?|died|shooting|sh
 
 // Context-sensitive: these only block when NOT near a positive framing word
 const SOFT_BLOCK_RE = /\b(conflict|crisis|emergency|war|collapse|charged)\b/gi;
-const POSITIVE_FRAMING_RE = /\b(end(ed|ing|s)?|resolv|peace|after|former|avoided?|prevented?|survived?|overcome|past|history|historic)\b/gi;
+// No /g flag — .test() is stateful with /g; we only need to know if framing exists, not count it
+const POSITIVE_FRAMING_RE = /\b(end(ed|ing|s)?|resolv|peace|after|former|avoided?|prevented?|survived?|overcome|past|history|historic)\b/i;
 
 const SIGNAL_RE = /\b(awarded?|record|breakthrough|launched?|opened?|celebrated?|recovered?|restored?|saved?|rescued?|achieved?|won|elected?|founded?|built|created?|donated?|raised|discovered?|approved?|expanded?|improved?|growing|thriving|healed?|reunited?|announce[sd]?|named|pioneered?|completed?|milestone|inspiring|celebrated?)\b/gi;
 

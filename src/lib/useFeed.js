@@ -3,7 +3,7 @@ import { STORIES } from "./data";
 
 const CATEGORIES = ["nature", "discover", "community", "wellness", "world", "politics", "local", "ideas"];
 
-export function useFeed(category = "all") {
+export function useFeed(category = "all", refreshKey = 0) {
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
@@ -36,7 +36,7 @@ export function useFeed(category = "all") {
       })
       .catch(e => { setError(e); setStories(STORIES); })
       .finally(() => setLoading(false));
-  }, [category]);
+  }, [category, refreshKey]);
 
   return { stories, loading, error };
 }

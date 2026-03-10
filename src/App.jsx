@@ -88,6 +88,7 @@ export default function App() {
   const [toast,         setToast]           = useState(null);
   const [readCount,     setReadCount]       = useState(0);
   const [showSwipe,     setShowSwipe]       = useState(false);
+  const [feedKey,       setFeedKey]         = useState(0);
   const [swipeNew,      setSwipeNew]        = useState(()=>!LS.get("bs-swipe-seen",false));
   const [nudgeDismissed,setNudgeDismissed]  = useState(()=>LS.get("bs-nudge-dismissed",false));
   const [activeTag,     setActiveTag]       = useState(null);
@@ -96,9 +97,9 @@ export default function App() {
   const suggTimerRef = useRef(null);
 
   // ── Live feed data ──
-  const { stories, loading: feedLoading, error: feedError } = useFeed(activeCategory);
+  const { stories, loading: feedLoading, error: feedError } = useFeed(activeCategory, feedKey);
   // Separate full-pool fetch for Discover — not tied to activeCategory
-  const { stories: allStories } = useFeed("all");
+  const { stories: allStories } = useFeed("all", feedKey);
 
   // ── Streak — real persistence via localStorage ──
   const [streakData, setStreakData] = useState(() => {
@@ -273,18 +274,12 @@ export default function App() {
                 </div>
               )}
               {!isMobile&&(
-                <div style={{ display:"flex",alignItems:"center",gap:6,padding:"5px 10px",background:C.amberPale,border:`1px solid ${C.amberMid}`,borderRadius:20,fontSize:11,fontWeight:600,color:C.amber }}>
-                  <span style={{ width:6,height:6,borderRadius:"50%",background:C.amber,display:"inline-block",animation:"bsPulse 2.2s infinite" }}/>
-                  Live feed
-                </div>
-              )}
-              {!isMobile&&<button className="bs-btn" onClick={()=>setShowDigest(true)}>Daily Digest</button>}
-              {!isMobile&&(
-                <button className="bs-btn" onClick={openSwipe} style={{ position:"relative" }}>
-                  Discover
-                  {swipeNew&&<span className="bs-new-badge" style={{ position:"absolute",top:-5,right:-5,background:C.amber,color:"#fff",borderRadius:4,padding:"1px 5px",fontSize:8,fontWeight:800,letterSpacing:"0.06em",lineHeight:1.4 }}>NEW</span>}
+                <button onClick={()=>setFeedKey(k=>k+1)} style={{ display:"flex",alignItems:"center",gap:6,padding:"5px 10px",background:feedLoading?C.surfaceAlt:C.amberPale,border:`1px solid ${feedLoading?C.border:C.amberMid}`,borderRadius:20,fontSize:11,fontWeight:600,color:feedLoading?C.inkLight:C.amber,cursor:"pointer",transition:"all 0.2s" }}>
+                  <span style={{ width:6,height:6,borderRadius:"50%",background:feedLoading?C.inkFaint:C.amber,display:"inline-block",animation:feedLoading?"none":"bsPulse 2.2s infinite" }}/>
+                  {feedLoading?"Refreshing…":"Refresh feed"}
                 </button>
               )}
+              {!isMobile&&<button className="bs-btn" onClick={()=>setShowDigest(true)}>Daily Digest</button>}
               <button aria-label="Search" className="bs-btn" onClick={()=>setShowSearch(v=>!v)} style={{ width:isMobile?40:36,height:isMobile?40:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center",background:showSearch?C.amberPale:C.surfaceAlt,borderColor:showSearch?C.amberMid:C.border }}><Ic.Search c={showSearch?C.amber:C.inkMid}/></button>
               <button aria-label="Your account" className="bs-btn" onClick={()=>setShowAccount(true)} style={{ width:isMobile?40:36,height:isMobile?40:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }}><Ic.Person c={C.inkMid}/></button>
               <button aria-label="Preferences" className="bs-btn" onClick={()=>setShowSettings(true)} style={{ width:isMobile?40:36,height:isMobile?40:36,padding:0,display:"flex",alignItems:"center",justifyContent:"center" }}><Ic.Settings c={C.inkMid}/></button>
@@ -497,6 +492,18 @@ export default function App() {
           </>
         )}
       </main>
+
+      {/* ── DISCOVER FLOATING BUTTON (desktop) ───────────────────── */}
+      {!isMobile&&(
+        <button onClick={openSwipe} style={{ position:"fixed",bottom:24,left:24,background:C.amber,border:"none",borderRadius:12,padding:"10px 18px",boxShadow:`0 4px 20px ${C.amberGlow}`,display:"flex",alignItems:"center",gap:10,cursor:"pointer",transition:"all 0.2s",zIndex:90 }}>
+          <Ic.Cards c="#fff" s={18}/>
+          <div style={{ textAlign:"left" }}>
+            <div style={{ fontSize:12,fontWeight:700,color:"#fff",lineHeight:1 }}>Discover</div>
+            <div style={{ fontSize:10,color:"rgba(255,255,255,0.75)",marginTop:2,lineHeight:1 }}>Swipe stories</div>
+          </div>
+          {swipeNew&&<span className="bs-new-badge" style={{ background:"#fff",color:C.amber,borderRadius:4,padding:"2px 6px",fontSize:8,fontWeight:800,letterSpacing:"0.06em",lineHeight:1.4,marginLeft:2 }}>NEW</span>}
+        </button>
+      )}
 
       {/* ── STREAK (desktop) ─────────────────────────────────────── */}
       {!isMobile&&(
