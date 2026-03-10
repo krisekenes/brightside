@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { LIGHT, DARK, cAcc, cBg } from "./lib/theme";
 import { MOOD_CONFIG, moodScore } from "./lib/mood";
 import { LS } from "./lib/storage";
-import { CATS, STORIES } from "./lib/data";
+import { CATS } from "./lib/data";
+import { useFeed } from "./lib/useFeed";
 import { Ic } from "./icons";
 import SettingsPanel from "./components/SettingsPanel";
 import StoryCard from "./components/StoryCard";
@@ -93,6 +94,9 @@ export default function App() {
   const [moodSuggestion,setMoodSuggestion]  = useState(null);
   const suggTimerRef = useRef(null);
 
+  // ── Live feed data ──
+  const { stories, loading: feedLoading, error: feedError } = useFeed(activeCategory);
+
   // ── Streak — real persistence via localStorage ──
   const [streakData, setStreakData] = useState(() => {
     const today = new Date().toISOString().split("T")[0];
@@ -172,7 +176,7 @@ export default function App() {
 
   // Personalized feed — filter by saved categories, then mood-sort
   const visible = useMemo(()=>{
-    let s = STORIES.filter(x=>{
+    let s = stories.filter(x=>{
       if(unseenStories.has(x.id)) return false;
       // Filter to preferred categories (unless a specific cat is drilled into)
       if(activeCategory==="all"){
@@ -187,18 +191,18 @@ export default function App() {
     });
     if(activeMood) s=[...s].sort((a,b)=>{ const d=moodScore(b,activeMood)-moodScore(a,activeMood); return Math.abs(d)>0.05?d:b.loves-a.loves; });
     return s;
-  },[unseenStories,activeCategory,radiusKm,searchQuery,activeMood,prefs.categories,activeTag]);
+  },[stories,unseenStories,activeCategory,radiusKm,searchQuery,activeMood,prefs.categories,activeTag]);
 
   const featured  = visible[0];
   const grid      = visible.slice(1);
-  const mostLoved = [...STORIES].filter(s=>!unseenStories.has(s.id)&&prefs.categories.includes(s.category)).sort((a,b)=>b.loves-a.loves).slice(0,6);
-  const nearYou   = [...STORIES].filter(s=>!unseenStories.has(s.id)&&s.radius>0&&prefs.categories.includes(s.category)).sort((a,b)=>a.radius-b.radius).slice(0,5);
-  const savedList   = STORIES.filter(s=>savedStories.has(s.id));
+  const mostLoved = [...stories].filter(s=>!unseenStories.has(s.id)&&prefs.categories.includes(s.category)).sort((a,b)=>b.loves-a.loves).slice(0,6);
+  const nearYou   = [...stories].filter(s=>!unseenStories.has(s.id)&&s.radius>0&&prefs.categories.includes(s.category)).sort((a,b)=>a.radius-b.radius).slice(0,5);
+  const savedList   = stories.filter(s=>savedStories.has(s.id));
   const swipeStories = useMemo(()=>
-    [...STORIES]
+    [...stories]
       .filter(s=>!unseenStories.has(s.id)&&prefs.categories.includes(s.category))
-      .sort((a,b)=>((a.id*7+3)%11)-((b.id*7+3)%11))
-  ,[unseenStories,prefs.categories]);
+      .sort(()=>Math.random()-0.5)
+  ,[stories,unseenStories,prefs.categories]);
 
   const openSwipe = useCallback(()=>{
     setShowSwipe(true);
@@ -246,6 +250,7 @@ export default function App() {
         @keyframes bsToastIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
         @keyframes bsNewPing{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.25);opacity:0.7}}
         .bs-new-badge{animation:bsNewPing 1.8s ease-in-out infinite}
+        @keyframes bsFeedLoad{0%{transform:scaleX(0)}60%{transform:scaleX(0.8)}100%{transform:scaleX(1);opacity:0}}
       `}</style>
 
       {/* ── HEADER ─────────────────────────────────────────────── */}
@@ -345,6 +350,23 @@ export default function App() {
         </div>
       )}
 
+      {/* ── FEED ERROR BANNER ────────────────────────────────────── */}
+      {feedError&&(
+        <div style={{ background:C.surfaceAlt,borderBottom:`1px solid ${C.border}`,padding:`8px ${isMobile?"14px":"28px"}` }}>
+          <div style={{ maxWidth:1160,margin:"0 auto",display:"flex",alignItems:"center",gap:8,fontSize:12,color:C.inkLight }}>
+            <span style={{ width:6,height:6,borderRadius:"50%",background:C.inkFaint,flexShrink:0 }}/>
+            Couldn't refresh feed — showing cached stories
+          </div>
+        </div>
+      )}
+
+      {/* ── FEED LOADING INDICATOR ───────────────────────────────── */}
+      {feedLoading&&(
+        <div style={{ position:"fixed",top:0,left:0,right:0,height:2,zIndex:200,overflow:"hidden" }}>
+          <div style={{ height:"100%",background:C.amber,animation:"bsFeedLoad 1.4s ease infinite",transformOrigin:"left center" }}/>
+        </div>
+      )}
+
       {/* ── MAIN ─────────────────────────────────────────────────── */}
       <main style={{ maxWidth:1160,margin:"0 auto",padding:`26px ${isMobile?"14px":"28px"} ${isMobile?"88px":"40px"}` }}>
 
@@ -368,7 +390,7 @@ export default function App() {
                   {!on&&<div style={{ position:"absolute",top:8,right:8,fontSize:9,fontWeight:700,color:C.inkLight,background:C.surfaceAlt,borderRadius:4,padding:"2px 6px" }}>hidden</div>}
                   <div style={{ width:28,height:28,borderRadius:8,background:`${acc}22`,display:"flex",alignItems:"center",justifyContent:"center" }}><div style={{ width:10,height:10,borderRadius:"50%",background:acc }}/></div>
                   <div style={{ fontFamily:"'Bricolage Grotesque',sans-serif",fontSize:15,color:C.ink }}>{cat.label}</div>
-                  <div style={{ fontSize:11,color:C.inkLight }}>{STORIES.filter(s=>s.category===cat.id).length} stories</div>
+                  <div style={{ fontSize:11,color:C.inkLight }}>{stories.filter(s=>s.category===cat.id).length} stories</div>
                 </button>);
               })}
             </div>
