@@ -96,6 +96,8 @@ export default function App() {
 
   // ── Live feed data ──
   const { stories, loading: feedLoading, error: feedError } = useFeed(activeCategory);
+  // Separate full-pool fetch for Discover — not tied to activeCategory
+  const { stories: allStories } = useFeed("all");
 
   // ── Streak — real persistence via localStorage ──
   const [streakData, setStreakData] = useState(() => {
@@ -199,10 +201,10 @@ export default function App() {
   const nearYou   = [...stories].filter(s=>!unseenStories.has(s.id)&&s.radius>0&&prefs.categories.includes(s.category)).sort((a,b)=>a.radius-b.radius).slice(0,5);
   const savedList   = stories.filter(s=>savedStories.has(s.id));
   const swipeStories = useMemo(()=>
-    [...stories]
+    [...allStories]
       .filter(s=>!unseenStories.has(s.id)&&prefs.categories.includes(s.category))
       .sort(()=>Math.random()-0.5)
-  ,[stories,unseenStories,prefs.categories]);
+  ,[allStories,unseenStories,prefs.categories]);
 
   const openSwipe = useCallback(()=>{
     setShowSwipe(true);

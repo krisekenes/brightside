@@ -71,47 +71,40 @@ function resolveCategory(requestedCategory, sectionId) {
 
 // ─── Positive keyword filter ───────────────────────────────────────────────────
 
-const BLOCKLIST = [
-  "killed", "killing", "kill", "murder", "murdered", "dead", "death", "deaths", "died",
-  "attack", "attacked", "shooting", "shooter", "gun violence", "stabbing",
-  "bomb", "bombing", "explosion", "terror", "terrorist", "missile", "nuclear",
-  "crash", "crashed", "disaster", "catastrophe", "casualties",
-  "war", "warfare", "conflict", "invasion", "siege", "military strike", "airstrike",
-  "abuse", "abused", "assault", "rape", "trafficking",
-  "crisis", "emergency", "collapse", "bankrupt", "recession",
-  "scandal", "corruption", "fraud", "arrested", "charged", "convicted",
-  "suicide", "overdose", "hostage", "kidnap",
-];
+// Whole-word blocklist — matched with \b to avoid "dead" hitting "deadline" etc.
+const BLOCKLIST_RE = /\b(killed|killing|murder|murdered|deaths?|died|shooting|shooter|gun\s+violence|stabbing|bombing?|explosion|terrorist?|missile|airstrike|military\s+strike|crashed?|disaster|catastrophe|casualties|warfare?|invasion|siege|abused?|assault|rape|trafficking|bankrupt|recession|scandal|corruption|fraud|arrested|convicted|suicide|overdose|hostage|kidnap)\b/gi;
 
-const SIGNAL_WORDS = [
-  "awarded", "record", "breakthrough", "launched", "opened", "celebrated",
-  "recovered", "restored", "saved", "rescued", "achieved", "won", "elected",
-  "founded", "built", "created", "donated", "raised", "discovered", "approved",
-  "expanded", "improved", "growing", "thriving", "healed", "reunited",
-];
+// Context-sensitive: these only block when NOT near a positive framing word
+const SOFT_BLOCK_RE = /\b(conflict|crisis|emergency|war|collapse|charged)\b/gi;
+const POSITIVE_FRAMING_RE = /\b(end(ed|ing|s)?|resolv|peace|after|former|avoided?|prevented?|survived?|overcome|past|history|historic)\b/gi;
+
+const SIGNAL_RE = /\b(awarded?|record|breakthrough|launched?|opened?|celebrated?|recovered?|restored?|saved?|rescued?|achieved?|won|elected?|founded?|built|created?|donated?|raised|discovered?|approved?|expanded?|improved?|growing|thriving|healed?|reunited?|announce[sd]?|named|pioneered?|completed?|milestone|inspiring|celebrated?)\b/gi;
 
 function stripHtml(str) {
   return str.replace(/<[^>]+>/g, " ");
 }
 
+function countMatches(text, re) {
+  return (text.match(re) || []).length;
+}
+
 function positiveFilter(story) {
-  const text = stripHtml(`${story.title} ${story.summary}`).toLowerCase();
+  const raw  = stripHtml(`${story.title} ${story.summary}`);
+  const text = raw.toLowerCase();
 
-  // Reject if there's no real summary content (liveblogs, etc.)
-  const stripped = stripHtml(story.summary).trim();
-  if (stripped.length < 30) return false;
+  // Reject liveblogs and stubs
+  if (raw.trim().length < 40) return false;
 
-  let blockHits = 0;
-  for (const word of BLOCKLIST) {
-    if (text.includes(word)) blockHits++;
-  }
+  const hardBlocks  = countMatches(text, BLOCKLIST_RE);
+  if (hardBlocks > 0) return false;
 
-  let signals = 0;
-  for (const word of SIGNAL_WORDS) {
-    if (text.includes(word)) signals++;
-  }
+  // Soft blocks only count if no positive framing nearby
+  const softBlocks  = countMatches(text, SOFT_BLOCK_RE);
+  const hasFraming  = POSITIVE_FRAMING_RE.test(text);
+  const effectiveSoftBlocks = (softBlocks > 0 && !hasFraming) ? softBlocks : 0;
 
-  const score = signals - blockHits * 3;
+  const signals = countMatches(text, SIGNAL_RE);
+  const score   = signals - effectiveSoftBlocks * 2;
   return score >= 0;
 }
 
